@@ -1,0 +1,15 @@
+{
+	"manifest_version": 2,
+
+	"name": "TrelloStories",
+	"description": "Easily manage story-task relations in Trello.",
+	"version": "1.0",
+
+	"content_scripts": [
+		{
+			"matches": ["https://trello.com/*"],
+			"js": ["jquery.js", "trello.js", "story.js", "list.js", "card.js", "TrelloStories.js"],
+			"run_at": "document_end"
+		}
+	]
+}
