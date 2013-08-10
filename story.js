@@ -68,7 +68,7 @@ var Story = function(card, cards){
 		var numStoryTasks = self.taskCards.length;
 		var isCompleted = numStoryTasks === numCompletedTasks;
 		if(isCompleted)
-			self.storyCard.hightlight('pink');
+			self.storyCard.highlight('pink');
 		else
 			self.storyCard.removeHighlight();
 	};
