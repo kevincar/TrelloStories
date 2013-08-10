@@ -10,6 +10,7 @@ var Story = function(card, cards){
 	self.storyCard = card;
 	self.storyID = card.storyID;
 	self.taskCards = _getTasks();
+	self.completedTaskList = 'Ready for QA';
 
 	self.markTasks = function(){
 		for(var index in self.taskCards) {
@@ -62,8 +63,24 @@ var Story = function(card, cards){
 		$(".pop-over").hide();
 	};
 
+	var _isComplete = function(){
+		var numCompletedTasks = self.taskCards.filter(function(i){return i.listName === self.completedTaskList}).length;
+		var numStoryTasks = self.taskCards.length;
+		var isCompleted = numStoryTasks === numCompletedTasks;
+		if(isCompleted)
+			self.storyCard.hightlight('pink');
+		else
+			self.storyCard.removeHighlight();
+	};
+
+	var _watchTasks = function(seconds){
+		var time = seconds * 1000;
+		return setInterval(function(){_isComplete();}, time);
+	};
+
 	self.applyID();
 	self.applyActions();
+	self.watchID = _watchTasks(5);
 
 	return self;
 };

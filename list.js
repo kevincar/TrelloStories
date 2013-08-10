@@ -1,10 +1,21 @@
 // LIST
 
-var List = function(listElement) {
+var List = function(listData) {
 	var self = this;
 
+	var _getListEl = function(){
+		var listEl = null;
+		$(".list").each(function(i,e){
+			var listName = $(e).find("h2").text;
+			if(listName = listData.name){
+				listEl = e;
+			}
+		});
+		return listEl;
+	};
+
 	var _getListName = function(){
-		var listText = $(self.el).find("h2").text(),
+		var listText = listData.name;
 			listTextInfo = listText.match(/(.*)\s\(.*\)/);
 		if(listTextInfo === null)
 			return listText;
@@ -13,24 +24,20 @@ var List = function(listElement) {
 	};
 
 	var _getListType = function(){
-		var listText = $(self.el).find("h2").text(),
+		var listText = listData.name;
 			listTextInfo = listText.match(/(.*)\s\((.*)\)/);
 		if(listTextInfo === null)
 			return "none";
 
 		return listTextInfo[2];
 	};
+	var applyWatch = function(){};
 
-	var applyWatch = function(){
-		$(document).on("cardAdded", function(event, card){
-			
-		});
-	};
-
-	self.el = listElement;
+	self.listData = listData;
+	self.el = _getListEl();
 	self.name = _getListName();
 	self.type = _getListType();
-	applyWatch();
+	applyWatch;
 
 	return self;
 };
