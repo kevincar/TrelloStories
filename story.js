@@ -66,7 +66,7 @@ var Story = function(card, cards){
 	var _isComplete = function(){
 		var numCompletedTasks = self.taskCards.filter(function(i){return i.listName === self.completedTaskList}).length;
 		var numStoryTasks = self.taskCards.length;
-		var isCompleted = numStoryTasks === numCompletedTasks;
+		var isCompleted = (numStoryTasks === numCompletedTasks) && numStoryTasks > 0;
 		if(isCompleted)
 			self.storyCard.highlight('pink');
 		else
