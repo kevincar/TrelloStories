@@ -22,12 +22,14 @@ var Story = function(card, cards){
 	self.applyActions = function() {
 		var card = self.storyCard;
 		$('[storyid='+card.storyID+']').on('click', '.js-card-menu', function(){
-			var actions = $('.pop-over').find('ul').eq(0);
-			var actionMarkTasks = "<li><a class='js-mark-story-tasks' data='"+card.storyID+"'>Mark Tasks...</a></li>";
-			$(actions).append(actionMarkTasks);
-			var actionIsComplete = "<li><a class='js-is-story-complete' data='"+card.storyID+"'>Is Completed?...</a></li>";
-			$(actions).append(actionIsComplete);
-			// $('.pop-over').show();
+			setTimeout(function(){
+				var actions = $('.pop-over').find('ul').eq(0);
+				var actionMarkTasks = "<li><a class='js-mark-story-tasks' data='"+card.storyID+"'>Mark Tasks...</a></li>";
+				$(actions).append(actionMarkTasks);
+				var actionIsComplete = "<li><a class='js-is-story-complete' data='"+card.storyID+"'>Is Completed?...</a></li>";
+				$(actions).append(actionIsComplete);
+				// $('.pop-over').show();
+			}, 50);
 		});
 		$(document).on('click', '[data='+card.storyID+'].js-mark-story-tasks', _handlerMarkTasks);
 		$(document).on('click', '[data='+card.storyID+'].js-is-story-complete', _handlerIsComplete);
