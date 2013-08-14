@@ -1,5 +1,5 @@
 // Trello Stoires
-var TrelloObject = function() {
+var TrelloObject = function(callback) {
 	var self = this;
 	self.Cards = [];
 	self.Lists = [];
@@ -111,8 +111,7 @@ var TrelloObject = function() {
 				expiration: "never",
 				success: function(){
 					_loadTrello(null,true);
-					return {Cards: self.Cards,Lists: self.Lists,Stories: self.Stories};
+					callback({Cards: self.Cards,Lists: self.Lists,Stories: self.Stories});
 				}
-			});;
-	
+			});;	
 }

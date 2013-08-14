@@ -65,6 +65,14 @@ var Card = function(cardData) {
 		return listInfo[2];
 	};
 
+	var _watch = function (){
+		$(document).on('click', self.el.selector, _handlerCheckEditing)
+	};
+
+	var _handlerCheckEditing = function(){
+		console.log("Card " + self.cardID + " was clicked!");
+	};
+
 	var self = this;
 	self.data = cardData;
 	self.el = _getCardEl();
@@ -75,6 +83,7 @@ var Card = function(cardData) {
 	self.listText = _getCardListText();
 	self.listName = _getCardListName();
 	self.type = _getCardType();
+	_watch();
 
 	self.highlight = function(color, flash){
 		if(color === undefined)
