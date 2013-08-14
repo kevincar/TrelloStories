@@ -5,6 +5,10 @@
 	"description": "Easily manage story-task relations in Trello.",
 	"version": "1.0",
 
+	"background" : {
+		"scripts": ["background.js"]
+	},
+
 	"content_scripts": [
 		{
 			"matches": ["https://trello.com/b/*","https://trello.com/c/*"],

@@ -98,9 +98,15 @@ var TrelloObject = function(callback) {
 	};
 
 	var _watchTrello = function(){
-		chrome.webRequest.onCompleted.addListener(function(details){
-			console.log(details);
-		});
+		// Send a message to the background to begin watching for URL changes
+		// chrome.runtime.sendMessage();
+
+		// Listen for incoming messages from our background script
+		// chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+		// 	console.log(request);
+		// 	console.log(sender);
+		// 	sendResponse({response: 'Message Received'});
+		// });
 	};
 
 
