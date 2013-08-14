@@ -111,6 +111,7 @@ var TrelloObject = function(callback) {
 		{
 			var checklistInfo = JSON.parse(self._trello.checklists.get(checkListId).responseText);
 			var moveToListName = checklistInfo.name;
+			moveToListName = moveToListName.match(/.*\[(.*)\].*/)[1];
 			var moveToListId = null;
 			for(var index in self.Lists){
 				if(self.Lists[index].listData.name === moveToListName){
