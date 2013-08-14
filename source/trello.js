@@ -99,14 +99,28 @@ var TrelloObject = function(callback) {
 
 	var _watchTrello = function(){
 		// Send a message to the background to begin watching for URL changes
-		// chrome.runtime.sendMessage();
+		chrome.runtime.sendMessage({request: "StartWatch"}, function(response){
+			if(response.response !== 'success') {
+				console.log("_watch Trello Failed...");
+			}
+		});
 
 		// Listen for incoming messages from our background script
-		// chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		// 	console.log(request);
-		// 	console.log(sender);
-		// 	sendResponse({response: 'Message Received'});
-		// });
+		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+			
+			// Send Back a success Response.
+			sendResponse({response: 'success'});
+			
+			var url = request.url;
+
+			// Try to get a cardID
+			var cardID = urlGet('c');
+
+			if(cardID !== undefined) {
+				var selectedCard = _trello.Cards.filter(function(card){return card.data.shortLink === cardID;})[0];
+			}
+
+		});
 	};
 
 
