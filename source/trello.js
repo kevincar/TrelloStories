@@ -41,7 +41,7 @@ var TrelloObject = function() {
 						Cards.push(card);
 				}
 			}
-			,function(){self.errorHandler.ajaxError}
+			,self.errorHandler.ajaxError
 		)
 	else
 		console.log("nope");
@@ -59,7 +59,7 @@ var TrelloObject = function() {
 					Lists.push(list);
 				}
 			}
-			,function(){self.errorHandler.ajaxError}
+			,self.errorHandler.ajaxError
 		)
 	else
 		console.log("nope");
@@ -84,11 +84,15 @@ var TrelloObject = function() {
 	// loadBoard - load the trello board
 	var _loadBoard = function(){
 		var path = window.location.pathname;
-		var trelloInfo = path.match(/\/(\w)\/(\w*)\/(.*)/i);
-		if(trelloInfo){
-			var isBoard = trelloInfo[1]==='b';
-			if(isBoard)
-				return trelloInfo[2];
+		var boardID = urlGet('b');
+		if(boardID){
+			return boardID;
+		}
+		else {
+			var cardID = urlGet('c');
+			self._trello.rest('GET', 'cards/'+cardID+'/board/shortLink', function(data){
+				console.log(data)
+			}, self.errorHandler.ajaxError);
 		}
 	};
 
