@@ -27,6 +27,9 @@ var TrelloObject = function(callback) {
 
 				// Stories
 				self.Stories = _loadStories();
+
+				//Watch Trello
+				_watchTrello();
 			}
 	};
 
@@ -94,14 +97,10 @@ var TrelloObject = function(callback) {
 		return boardID;
 	};
 
-	// loadAppEventListeners - initiates listening for app commands
-	var _loadAppEventListeners = function(){
-		//MarkTasks - used to mark all the tasks assosiated with a story
-		$(document).on("MarkTasks", function(event, element){
-			
+	var _watchTrello = function(){
+		chrome.webRequest.onCompleted.addListener(function(details){
+			console.log(details);
 		});
-
-		// $(document).on("authenticate", _authenticate);
 	};
 
 	self._trello.authorize({

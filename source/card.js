@@ -65,8 +65,15 @@ var Card = function(cardData) {
 		return listInfo[2];
 	};
 
+	var _addCardID = function(){
+		if(self.el === undefined)
+			self.el = _getCardEl();
+
+		$(self.el).attr("cardid", self.cardID);
+	};
+
 	var _watch = function (){
-		$(document).on('click', self.el.selector, _handlerCheckEditing)
+		$(document).on('click', '[cardid='+self.cardID+'] .pirate-overlay', _handlerCheckEditing);
 	};
 
 	var _handlerCheckEditing = function(){
@@ -83,6 +90,7 @@ var Card = function(cardData) {
 	self.listText = _getCardListText();
 	self.listName = _getCardListName();
 	self.type = _getCardType();
+	_addCardID();
 	_watch();
 
 	self.highlight = function(color, flash){

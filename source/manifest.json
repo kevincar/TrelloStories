@@ -14,9 +14,9 @@
 	],
 
 	"permissions": [
-		"storage",
-		"http://trello.com/b/",
-		"http://trello.com/c/"
+		"storage", 
+		"webRequest",
+		"*://trello.com/*"
 	],
 
 	"browser_action" : {
