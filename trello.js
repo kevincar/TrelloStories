@@ -4,16 +4,15 @@ var TrelloObject = function() {
 	self.Cards = [];
 	self.Lists = [];
 	self.Stories = [];
-	self.appKey = "1e9099f8056922e2437ec2a600e0c2a1";
+	// self.appKey = "1e9099f8056922e2437ec2a600e0c2a1";
 	self.appToken = '';
 	self.authenticated = false;
 	self.board = '';
-	self.REST = 'https://api.trello.com/1/';
+	// self.REST = 'https://api.trello.com/1/';
 	self.errorHandler = new ErrorHandler();
+	self._trello = Trello;
 
-	var _loadTrello = function(){
-		// Authenticate
-		_authenticate(function(error, result){
+	var _loadTrello = function(error, result){
 			if(error)
 				alert(error);
 			else{
@@ -29,46 +28,41 @@ var TrelloObject = function() {
 				// Stories
 				self.Stories = _loadStories();
 			}
-		});
-
-		// _loadAppEventListeners();
 	};
 
 	// loadCards - Loads the cards
 	var _loadCards = function(){
 		var Cards = [];
-		$.ajax({
-			async: false,
-			type: 'GET',
-			url: self.getAPIRequest('boards/'+self.board+'/cards'),
-			error: self.errorHandler.ajaxError,
-			success: function(data, textStatus, jqXHR) {
-				for(var cardDataIndex in data) {
-					var cardData = data[cardDataIndex];
-					var card = new Card(cardData);
-					Cards.push(card);
+		if(self._trello.authorized())
+		self._trello.rest("GET","boards/"+self.board+"/cards"
+			,function(cards){
+				for(var index in cards) {
+						var card = new Card(cards[index]);
+						Cards.push(card);
 				}
 			}
-		});
+			,function(){self.errorHandler.ajaxError}
+		)
+	else
+		console.log("nope");
 		return Cards;
 	};
 
 	// loadLists - Load the lists
 	var _loadLists = function(){
 		var Lists = [];
-		$.ajax({
-			async: false,
-			type: 'GET',
-			url: self.getAPIRequest('boards/'+self.board+'/lists'),
-			error: self.errorHandler.ajaxError,
-			success: function(data, textStatus, jqXHR) {
-				for(var listDataIndex in data){
-					var listData = data[listDataIndex];
-					var list = new List(listData);
+		if(self._trello.authorized())
+		self._trello.rest("GET","boards/"+self.board+"/lists"
+			,function(lists){
+				for(var index in lists) {
+					var list = new List(lists[index]);
 					Lists.push(list);
 				}
 			}
-		});
+			,function(){self.errorHandler.ajaxError}
+		)
+	else
+		console.log("nope");
 		return Lists;
 	};
 
@@ -98,20 +92,6 @@ var TrelloObject = function() {
 		}
 	};
 
-	// Authenticating The App Token
-	var _authenticate = function(callback){
-		chrome.storage.sync.get("trelloUserToken", function(items){
-			if(typeof items.trelloUserToken !== 'undefined') {
-				var token = items.trelloUserToken;
-				self.appToken = token;
-				callback(null, true);
-			}
-			else {
-				callback("User Token has not been set. Please set the user token in the extension.");
-			}
-		});
-	};
-
 	// loadAppEventListeners - initiates listening for app commands
 	var _loadAppEventListeners = function(){
 		//MarkTasks - used to mark all the tasks assosiated with a story
@@ -122,15 +102,15 @@ var TrelloObject = function() {
 		// $(document).on("authenticate", _authenticate);
 	};
 
-	self.getAPIRequest = function(url){
-		return self.REST+url+"?key="+self.appKey+"&token="+self.appToken;
-	};
-
-	_loadTrello();
-
-	return {
-		Cards: self.Cards,
-		Lists: self.Lists,
-		Stories: self.Stories
-	};
+	self._trello.authorize({
+				type:"popup",
+				name:"TrelloStories",
+				scope : {read:true,write:true},
+				expiration: "never",
+				success: function(){
+					_loadTrello(null,true);
+					return {Cards: self.Cards,Lists: self.Lists,Stories: self.Stories};
+				}
+			});;
+	
 }

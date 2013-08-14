@@ -7,15 +7,16 @@
 
 	"content_scripts": [
 		{
-			"matches": ["https://trello.com/*"],
-			"js": ["jquery.js", "trello.js", "error.js", "story.js", "list.js", "card.js", "TrelloStories.js"],
+			"matches": ["https://trello.com/b/*","https://trello.com/c/*"],
+			"js": ["jquery.js", "trello.js", "error.js", "story.js", "list.js", "card.js", "TrelloStories.js","trelloClient.js","TrelloUrlInfo.js"],
 			"run_at": "document_end"
 		}
 	],
 
 	"permissions": [
-		"storage", "http://*/*",
-		"tabs", "http://*/*"
+		"storage",
+		"http://trello.com/b/",
+		"http://trello.com/c/"
 	],
 
 	"browser_action" : {
