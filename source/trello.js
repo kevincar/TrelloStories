@@ -85,15 +85,13 @@ var TrelloObject = function() {
 	var _loadBoard = function(){
 		var path = window.location.pathname;
 		var boardID = urlGet('b');
-		if(boardID){
-			return boardID;
-		}
-		else {
+		if(boardID === undefined) {
 			var cardID = urlGet('c');
-			self._trello.rest('GET', 'cards/'+cardID+'/board/shortLink', function(data){
-				console.log(data)
+			self._trello.rest('GET', 'cards/'+cardID+'/board/shortLink', function(shortLink){
+				boardID = shortLink._value;
 			}, self.errorHandler.ajaxError);
 		}
+		return boardID;
 	};
 
 	// loadAppEventListeners - initiates listening for app commands
