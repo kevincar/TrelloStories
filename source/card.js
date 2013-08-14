@@ -1,7 +1,7 @@
 // TrelloStories.js
 
 // Load Cards
-var Card = function(cardData) {
+var Card = function(cardData,listId) {
 
 	// Get Card Element
 	var _getCardEl = function(){
@@ -82,6 +82,7 @@ var Card = function(cardData) {
 
 	var self = this;
 	self.data = cardData;
+	self.parentListId = listId;
 	self.el = _getCardEl();
 	self.text = cardData.name;
 	self.cardID = cardData.idShort;
@@ -92,6 +93,25 @@ var Card = function(cardData) {
 	self.type = _getCardType();
 	_addCardID();
 	_watch();
+
+	self._convertChecklistsToCards = function(){
+		var checkLists = self.data.idChecklists;
+		for(var index in checkLists)
+			window._trello.convertChecklistToCards(checkLists[index]);
+	}
+
+	var _applyActions = function() {
+		$('[cardid='+self.cardID+']').on('click', '.js-card-menu', function(){
+			setTimeout(function(){
+				var actions = $('.pop-over').find('ul').eq(0);
+				var actionConvertChecklists = "<li><a class='js-convert-checklists' data='"+self.cardID+"'>Checklists to Cards.</a></li>";
+				$(actions).append(actionConvertChecklists);
+				// $('.pop-over').show();
+			}, 50);
+		});
+		$(document).on('click', '[data='+self.cardID+'].js-convert-checklists', self._convertChecklistsToCards);
+	};
+	_applyActions();
 
 	self.highlight = function(color, flash){
 		if(color === undefined)
