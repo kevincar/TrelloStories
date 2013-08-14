@@ -1,8 +1,8 @@
 // Trello Stoires
 var TrelloObject = function(callback) {
 	var self = this;
-	self.Cards = [];
-	self.Lists = [];
+	self.Cards = {};
+	self.Lists = {};
 	self.Stories = [];
 	// self.appKey = "1e9099f8056922e2437ec2a600e0c2a1";
 	self.appToken = '';
@@ -29,7 +29,7 @@ var TrelloObject = function(callback) {
 				self.Stories = _loadStories();
 
 				//Watch Trello
-				_watchTrello();
+				// _watchTrello();
 			}
 	};
 
@@ -37,16 +37,18 @@ var TrelloObject = function(callback) {
 	var _loadCards = function(){
 		var Cards = [];
 		if(self._trello.authorized())
-		self._trello.rest("GET","boards/"+self.board+"/cards"
-			,function(cards){
-				for(var index in cards) {
+		{
+			self._trello.rest("GET","board/"+self.board+"/cards"
+				,function(cards){
+					for(var index in cards) {
 						var card = new Card(cards[index]);
-						Cards.push(card);
+						Cards[card.data.id] = card;
+					}
 				}
-			}
-			,self.errorHandler.ajaxError
-		)
-	else
+				,self.errorHandler.ajaxError
+			)
+		}
+		else
 		console.log("nope");
 		return Cards;
 	};
@@ -59,7 +61,7 @@ var TrelloObject = function(callback) {
 			,function(lists){
 				for(var index in lists) {
 					var list = new List(lists[index]);
-					Lists.push(list);
+					Lists[list.listData.id] = list;
 				}
 			}
 			,self.errorHandler.ajaxError
@@ -75,11 +77,12 @@ var TrelloObject = function(callback) {
 		if(self.Cards === [])
 			self.Cards = _loadCards();
 
-		var storyCards = self.Cards.filter(function(i){return (i.storyID!==null && i.type==='Stories')});
-		for(var index in storyCards) {
-			var storyCard = storyCards[index];
-			var story = new Story(storyCard, self.Cards);
-			Stories.push(story);
+		for(var index in self.Cards) {
+			if(self.Cards[index].storyID !== null && self.Cards[index].type === 'Stories'){
+				var storyCard = self.Cards[index];
+				var story = new Story(storyCard, self.Cards);
+				Stories.push(story);
+			}
 		}
 		return Stories;
 	};
@@ -103,14 +106,39 @@ var TrelloObject = function(callback) {
 		});
 	};
 
+	self.convertChecklistToCards = function(checkListId){
+		if(self._trello.authorized())
+		{
+			var checklistInfo = JSON.parse(self._trello.checklists.get(checkListId).responseText);
+			var moveToListName = checklistInfo.name;
+			var moveToListId = null;
+			for(var index in self.Lists){
+				if(self.Lists[index].listData.name === moveToListName){
+					moveToListId = index;
+				}
+			}
+			if(moveToListId != null){
+				for(var item in checklistInfo.checkItems){
+					itemInfo = checklistInfo.checkItems[item];
+					originCard = self.Cards[checklistInfo.idCard];
+					var storyId = null;
+					if(arguments.length > 1)
+						storyId = arguments[1];
+					self.createCard(moveToListId,{name:((storyId!=null)?storyId+" ":"")+itemInfo.name,desc:"**Parent Card:** `"+originCard.name+"`\n**Parent List:** `"+originCard.listText+"`\n\n---"});
+				}
+			}
+		}
+	}
 
 	self.createCard = function(listId, cardData){
 		if(self._trello.authorized())
 		{
 			//card data should {name:value[,desc:value]}
-			cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
-			self.Cards.push(new Card(cardInfo));
+			var cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
+			self.Cards[cardInfo.id] = new Card(cardInfo);
+			return cardInfo.id;
 		}
+		return null;
 	}
 
 	self._trello.authorize({
