@@ -6,5 +6,6 @@ $(document).ready(function(){
 			console.log(trello);
 			window._trello = trello;
 		});
+
 	}, 1000);
 });

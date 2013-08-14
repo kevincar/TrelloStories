@@ -77,7 +77,7 @@ var Card = function(cardData) {
 	};
 
 	var _handlerCheckEditing = function(){
-		console.log("Card " + self.cardID + " was clicked!");
+		// console.log("Card " + self.cardID + " was clicked!");
 	};
 
 	var self = this;

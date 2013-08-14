@@ -55,7 +55,7 @@ var TrelloObject = function(callback) {
 	var _loadLists = function(){
 		var Lists = [];
 		if(self._trello.authorized())
-		self._trello.rest("GET","boards/"+self.board+"/lists"
+			self._trello.boards.get(self.board+"/lists"
 			,function(lists){
 				for(var index in lists) {
 					var list = new List(lists[index]);
@@ -103,6 +103,16 @@ var TrelloObject = function(callback) {
 		});
 	};
 
+
+	self.createCard = function(listId, cardData){
+		if(self._trello.authorized())
+		{
+			//card data should {name:value[,desc:value]}
+			cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
+			self.Cards.push(new Card(cardInfo));
+		}
+	}
+
 	self._trello.authorize({
 				type:"popup",
 				name:"TrelloStories",
@@ -110,7 +120,7 @@ var TrelloObject = function(callback) {
 				expiration: "never",
 				success: function(){
 					_loadTrello(null,true);
-					callback({Cards: self.Cards,Lists: self.Lists,Stories: self.Stories});
+					callback(self);
 				}
 			});;	
 }
