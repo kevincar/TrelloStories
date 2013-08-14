@@ -1,0 +1,26 @@
+{
+	"manifest_version": 2,
+
+	"name": "TrelloStories",
+	"description": "Easily manage story-task relations in Trello.",
+	"version": "1.0",
+
+	"content_scripts": [
+		{
+			"matches": ["https://trello.com/b/*","https://trello.com/c/*"],
+			"js": ["jquery.js", "trello.js", "error.js", "story.js", "list.js", "card.js", "TrelloStories.js","trelloClient.js","TrelloUrlInfo.js"],
+			"run_at": "document_end"
+		}
+	],
+
+	"permissions": [
+		"storage",
+		"http://trello.com/b/",
+		"http://trello.com/c/"
+	],
+
+	"browser_action" : {
+		"default_icon" : "icon.png",
+		"default_popup": "popup.html"
+	}
+}
