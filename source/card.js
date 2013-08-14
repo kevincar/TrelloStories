@@ -81,14 +81,16 @@ var Card = function(cardData) {
 			color = 'pink';
 		if(flash === undefined)
 			flash = false;
-		$(self.el).closest(".list-card").css('background-color', color);
+		// $(self.el).closest(".list-card").css('background-color', color);
+		$(self.el).closest(".list-card").css('box-shadow', '0px 0px 15px 5px '+color+' inset');
 
 		if(flash)
 			timer = setTimeout(function(){self.removeHighlight();}, 2000);
 	};
 
 	self.removeHighlight = function() {
-		$(self.el).closest(".list-card").css("background-color", '');
+		// $(self.el).closest(".list-card").css("background-color", '');
+		$(self.el).closest(".list-card").css("box-shadow", '');
 	};
 
 	return self;
