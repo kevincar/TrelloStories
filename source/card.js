@@ -1,107 +1,153 @@
 // TrelloStories.js
-
+var Card;
 // Load Cards
-var Card = function(cardData,listId) {
+Card = (function(){
+	
+	/**
+	 * Constructor - 
+	 * @param - cardData. Data needed to load the card
+	 * @param - listId. Not sure?
+	 */
+	function Card(cardData,listId) {
+		// Initialize Variables
+		var self = this;
+		self.data = cardData;
+		self.parentListId = listId;
+		self.el = _getCardEl.apply(self);
+		self.text = cardData.name;
+		self.cardID = cardData.idShort;
+		self.storyID = _getCardStoryID.apply(self);
+		self.name = _getCardName.apply(self);
+		self.listText = _getCardListText.apply(self);
+		self.listName = _getCardListName.apply(self);
+		self.type = _getCardType.apply(self);
+		self.selected = false;
+
+		// Inititory Functions
+		_addCardID.apply(self);
+		_applyActions.apply(self);
+
+		// Event Listeners
+		_initListeners.apply(self);
+	}
+
+    //========================================================================//
+    //																		  //
+    //							Public Functions							  //
+    //																		  //
+    //========================================================================//
+
+	Card.prototype._convertChecklistsToCards = function(){
+		var self = this,
+			checkLists = self.data.idChecklists;
+		for(var index in checkLists)
+			window._trello.convertChecklistToCards(checkLists[index]);
+	};
+
+	Card.prototype.highlight = function(color, flash){
+		var self = this;
+
+		if(color === undefined)
+			color = 'pink';
+		if(flash === undefined)
+			flash = false;
+		$(self.el).closest(".list-card").css('box-shadow', '0px 0px 15px 5px '+color+' inset');
+
+		if(flash)
+			timer = setTimeout(function(){self.removeHighlight();}, 2000);
+	};
+
+	Card.prototype.removeHighlight = function() {
+		var self = this;
+		$(self.el).closest(".list-card").css("box-shadow", '');
+	};
+
+    //========================================================================//
+    //																		  //
+    //							Private Functions							  //
+    //																		  //
+    //========================================================================//
 
 	// Get Card Element
-	var _getCardEl = function(){
-		var cardEl = null
+	function _getCardEl(){
+		var self = this,
+			cardEl = null;
+
 		$(".list-card").each(function(i, e){
 			var shortID = $(e).find("a span.card-short-id").text().match(/#([0-9]*)/)[1];
-			if(shortID == cardData.idShort){
+			if(shortID == self.data.idShort){
 				cardEl = e;
 			}
 		});
+
 		return cardEl;
-	};
+	}
 
 	// Get Card Story ID
-	var _getCardStoryID = function() {
+	 function _getCardStoryID() {
+	 	var self = this;
 		if(self.text === undefined)
-			self.text = cardData.name;
+			self.text = self.data.name;
 		var cardTextInfo = self.text.match(/([0-9][0-9][0-9]).*/);
 		if(cardTextInfo === null)
 			return null;
 
 		return cardTextInfo[1];
-	};
+	}
 
 	// Get Card Name
-	var _getCardName = function() {
+	function _getCardName() {
+		var self = this;
 		if(self.text === undefined)
-			self.text = cardData.name;
+			self.text = self.data.name;
 		var cardTextInfo = self.text.match(/([0-9][0-9][0-9]).*/);
 		if(cardTextInfo === null)
 			return self.text;
 
 		return self.text.split(cardTextInfo[1])[1];
-	};
+	}
 
 	// Get Card List Text
-	var _getCardListText = function() {
-		var list = $(self.el).closest('.list');
-		var listHeader = $(list).find('.list-header');
-		var listName = $(listHeader).find('h2');
-		var listNameText = $(listName).text();
+	function _getCardListText() {
+		var self = this,
+			list = $(self.el).closest('.list'),
+			listHeader = $(list).find('.list-header'),
+			listName = $(listHeader).find('h2'),
+			listNameText = $(listName).text();
 		return listNameText;
-	};
+	}
 
 	// Get Card List Name
-	var _getCardListName = function() {
+	function _getCardListName() {
+		var self = this;
 		if(self.listText === undefined)
-			self.listText = _getCardListText();
+			self.listText = _getCardListText.apply(self);
 		var listInfo = self.listText.match(/(.*)\s\((.*)\)/);
 		if(listInfo === null)
 			return self.listText;
 		return listInfo[1];
-	};
+	}
 
-	var _getCardType = function() {
+	function _getCardType() {
+		var self = this;
 		if(self.listText === undefined)
-			self.listText = _getCardListText();
+			self.listText = _getCardListText.apply(self);
 		var listInfo = self.listText.match(/(.*)\((.*)\)/);
 		if(listInfo === null)
 			return "Stories";
 		return listInfo[2];
-	};
-
-	var _addCardID = function(){
-		if(self.el === undefined)
-			self.el = _getCardEl();
-
-		$(self.el).attr("cardid", self.cardID);
-	};
-
-	var _watchForEdits = function (){
-		$(document).on("editCheckListItem", function(event, cardID){
-			if(cardID === self.data.shortLink){
-				console.log('ME!');
-			}
-		});
-	};
-
-	var self = this;
-	self.data = cardData;
-	self.parentListId = listId;
-	self.el = _getCardEl();
-	self.text = cardData.name;
-	self.cardID = cardData.idShort;
-	self.storyID = _getCardStoryID();
-	self.name = _getCardName();
-	self.listText = _getCardListText();
-	self.listName = _getCardListName();
-	self.type = _getCardType();
-	self.selected = false;
-	_addCardID();
-	_watchForEdits();
-
-	self._convertChecklistsToCards = function(){
-		var checkLists = self.data.idChecklists;
-		for(var index in checkLists)
-			window._trello.convertChecklistToCards(checkLists[index]);
 	}
 
-	var _applyActions = function() {
+	function _addCardID(){
+		var self = this;
+		if(self.el === undefined)
+			self.el = _getCardEl.apply(self);
+
+		$(self.el).attr("cardid", self.cardID);
+	}
+
+	function _applyActions() {
+		var self = this;
 		$('[cardid='+self.cardID+']').on('click', '.js-card-menu', function(){
 			setTimeout(function(){
 				var actions = $('.pop-over').find('ul').eq(0);
@@ -111,25 +157,17 @@ var Card = function(cardData,listId) {
 			}, 50);
 		});
 		$(document).on('click', '[data='+self.cardID+'].js-convert-checklists', self._convertChecklistsToCards);
-	};
-	_applyActions();
+	}
 
-	self.highlight = function(color, flash){
-		if(color === undefined)
-			color = 'pink';
-		if(flash === undefined)
-			flash = false;
-		// $(self.el).closest(".list-card").css('background-color', color);
-		$(self.el).closest(".list-card").css('box-shadow', '0px 0px 15px 5px '+color+' inset');
+    //========================================================================//
+    //																		  //
+    //							Event Listeners 							  //
+    //																		  //
+    //========================================================================//
 
-		if(flash)
-			timer = setTimeout(function(){self.removeHighlight();}, 2000);
-	};
+	function _initListeners(){
+		
+	}
 
-	self.removeHighlight = function() {
-		// $(self.el).closest(".list-card").css("background-color", '');
-		$(self.el).closest(".list-card").css("box-shadow", '');
-	};
-
-	return self;
-};
+	return Card;
+})();
