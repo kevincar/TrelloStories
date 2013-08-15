@@ -29,7 +29,7 @@ var TrelloObject = function(callback) {
 				self.Stories = _loadStories();
 
 				//Watch Trello
-				// _watchTrello();
+				 _watchForCardChanges();
 			}
 	};
 
@@ -46,7 +46,8 @@ var TrelloObject = function(callback) {
 					}
 				}
 				,self.errorHandler.ajaxError
-			)
+			);
+			_watchForCardChanges();
 		}
 		else
 		console.log("nope");
@@ -100,30 +101,47 @@ var TrelloObject = function(callback) {
 		return boardID;
 	};
 
-	var _watchTrello = function(){
-		// Send a message to the background to begin watching for URL changes
-		chrome.runtime.sendMessage({request: "StartWatch"}, function(response){
-			if(response.response !== 'success') {
-				console.log("_watch Trello Failed...");
-			}
-		});
+	// We actually might not need this, nor the background script.
+	// var _watchTrello = function(){
+	// 	// Send a message to the background to begin watching for URL changes
+	// 	chrome.runtime.sendMessage({request: "StartWatch"}, function(response){
+	// 		if(response.response !== 'success') {
+	// 			console.log("_watch Trello Failed...");
+	// 		}
+	// 	});
 
-		// Listen for incoming messages from our background script
-		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+	// 	// Listen for incoming messages from our background script
+	// 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 			
-			// Send Back a success Response.
-			sendResponse({response: 'success'});
+	// 		// Send Back a success Response.
+	// 		sendResponse({response: 'success'});
 			
-			var url = request.url;
+	// 		var url = request.url;
 
-			// Try to get a cardID
-			var cardID = urlGet('c');
+	// 		var boardID = urlGet('b');
+	// 		// Try to get a cardID
+	// 		var cardID = urlGet('c');
 
-			if(cardID !== undefined) {
-				var selectedCard = _trello.Cards.filter(function(card){return card.data.shortLink === cardID;})[0];
-			}
+	// 		if(cardID !== undefined) {
+	// 			var selectedCard = self.Cards.filter(function(card){return card.data.shortLink === cardID;})[0];
+	// 			selectedCard.selected = true;
+	// 		}
+	// 		else if(boardID !== undefined)
+	// 			_deselectCards();
 
-		});
+	// 	});
+	// };
+
+	var _deselectCards = function(){
+		var selectedCards = self.Cards.filter(function(card){return card.selected;});
+		for(var sci in selectedCards) {
+			var selectedCard = selectedCards[sci];
+			selectedCard.selected  = false;
+		}
+	};
+
+	var _watchForCardChanges = function(){
+		$(document).on("click", '.js-add-checklist-menu', function(){$(document).trigger("addCheckList");});
 	};
 
 	self.convertChecklistToCards = function(checkListId){

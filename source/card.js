@@ -72,8 +72,10 @@ var Card = function(cardData,listId) {
 		$(self.el).attr("cardid", self.cardID);
 	};
 
-	var _watch = function (){
-		$(document).on('click', '[cardid='+self.cardID+'] .pirate-overlay', _handlerCheckEditing);
+	var _watchForEdits = function (){
+		$(document).on("addCheckList", function(){
+			console.log("Check List Added");
+		});
 	};
 
 	var _handlerCheckEditing = function(){
@@ -91,8 +93,9 @@ var Card = function(cardData,listId) {
 	self.listText = _getCardListText();
 	self.listName = _getCardListName();
 	self.type = _getCardType();
+	self.selected = false;
 	_addCardID();
-	_watch();
+	_watchForEdits();
 
 	self._convertChecklistsToCards = function(){
 		var checkLists = self.data.idChecklists;
