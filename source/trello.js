@@ -101,6 +101,8 @@ var TrelloObject = function(callback) {
 		return boardID;
 	};
 
+	// Trello may be cancelling any request from here. We actually may NEED the background script 
+	// to comunicate more thoroughly 
 	// We actually might not need this, nor the background script.
 	// var _watchTrello = function(){
 	// 	// Send a message to the background to begin watching for URL changes
@@ -141,7 +143,7 @@ var TrelloObject = function(callback) {
 	};
 
 	var _watchForCardChanges = function(){
-		$(document).on("click", '.js-add-checklist-menu', function(){$(document).trigger("addCheckList");});
+		
 	};
 
 	self.convertChecklistToCards = function(checkListId){

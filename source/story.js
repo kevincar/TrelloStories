@@ -25,13 +25,10 @@ var Story = function(card, cards){
 			setTimeout(function(){
 				$('[data='+card.cardID+'].js-convert-checklists').remove();
 				var actions = $('.pop-over').find('ul').eq(0);
-				var actionMarkTasks = "<li><a class='js-mark-story-tasks' data='"+card.storyID+"'>Mark Tasks...</a></li>";
+				var actionMarkTasks = "<li><a class='js-mark-story-tasks' data='"+card.storyID+"'>Mark Tasks.</a></li>";
 				$(actions).append(actionMarkTasks);
-				var actionIsComplete = "<li><a class='js-is-story-complete' data='"+card.storyID+"'>Is Completed?...</a></li>";
+				var actionIsComplete = "<li><a class='js-is-story-complete' data='"+card.storyID+"'>Check Completion.</a></li>";
 				$(actions).append(actionIsComplete);
-				var actionConvertChecklists = "<li><a class='js-convert-checklists' data='"+card.storyID+"'>Checklists to Cards.</a></li>";
-				$(actions).append(actionConvertChecklists);
-				// $('.pop-over').show();
 			}, 50);
 		});
 		$(document).on('click', '[data='+card.storyID+'].js-convert-checklists', _convertChecklistsToCards);
