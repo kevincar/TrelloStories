@@ -73,13 +73,11 @@ var Card = function(cardData,listId) {
 	};
 
 	var _watchForEdits = function (){
-		$(document).on("addCheckList", function(){
-			console.log("Check List Added");
+		$(document).on("editCheckListItem", function(event, cardID){
+			if(cardID === self.data.shortLink){
+				console.log('ME!');
+			}
 		});
-	};
-
-	var _handlerCheckEditing = function(){
-		// console.log("Card " + self.cardID + " was clicked!");
 	};
 
 	var self = this;
