@@ -11,4 +11,4 @@ var urlGet = function(key){
 	
 	if((index = searchVars.indexOf(key)) > -1 && index < searchVars.length - 1)
 		return searchVars[index+1];
-}
+};

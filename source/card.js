@@ -54,7 +54,9 @@ Card = (function(){
 		$(self.el).closest(".list-card").css('box-shadow', '0px 0px 15px 5px '+color+' inset');
 
 		if(flash)
-			timer = setTimeout(function(){self.removeHighlight();}, 2000);
+			timer = setTimeout(function(){
+				self.removeHighlight();
+			}, 2000);
 	};
 
 	Card.prototype.removeHighlight = function() {
@@ -156,7 +158,7 @@ Card = (function(){
 				// $('.pop-over').show();
 			}, 50);
 		});
-		$(document).on('click', '[data='+self.cardID+'].js-convert-checklists', self._convertChecklistsToCards);
+		$(document).on('click', '[data='+self.cardID+'].js-convert-checklists', function(){self._convertChecklistsToCards();});
 	}
 
     //========================================================================//

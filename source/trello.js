@@ -140,7 +140,7 @@ TrelloObject = (function() {
 	 */
 	function _loadLists(){
 		var self = this,
-			Lists = [];
+			Lists = {};
 		if(self._trello.authorized())
 			self._trello.boards.get(self.board+"/lists", function(lists){
 				for(var index in lists) {
@@ -160,7 +160,7 @@ TrelloObject = (function() {
 	 */
 	function _loadCards(){
 		var self = this,
-			Cards = [];
+			Cards = {};
 		if(self._trello.authorized())
 		{
 			self._trello.rest("GET","board/"+self.board+"/cards", function(cards){
@@ -188,7 +188,8 @@ TrelloObject = (function() {
 			self.Cards = _loadCards();
 
 		for(var index in self.Cards) {
-			if(self.Cards[index].storyID !== null && self.Cards[index].type === 'Stories'){
+			var card = self.Cards[index];
+			if(card.storyID !== null && card.type === 'Stories'){
 				var storyCard = self.Cards[index];
 				var story = new Story(storyCard, self.Cards);
 				Stories.push(story);
