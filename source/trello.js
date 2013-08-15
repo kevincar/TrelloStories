@@ -37,9 +37,10 @@ TrelloObject = (function() {
 				callback(self);
 			}
 		});
+
+		return self;
     }
 
-    return TrelloObject;
 
     //========================================================================//
     //																		  //
@@ -247,4 +248,5 @@ TrelloObject = (function() {
 
 	// 	});
 	// };
+    return TrelloObject;
 })();
