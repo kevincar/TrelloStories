@@ -112,8 +112,7 @@ TrelloObject = (function() {
 		self.Stories = _loadStories.apply(self);
 
 		// Listeners
-		if(self.view === 'c')
-			_initListeners.apply(self);
+		_initListeners.apply(self);
 	}
 
 	/**
@@ -199,6 +198,26 @@ TrelloObject = (function() {
 		return Stories;
 	}
 
+	function _initMessages(){
+		var self = this;
+		// Send a message to the background to begin watching for URL changes
+		chrome.runtime.sendMessage({request: "initMessages"}, function(response){
+			if(response.response !== 'success') {
+				console.log("Failed to initiate Messaging system with the extension backgroun.");
+			}
+		});
+
+		// Listen for incoming messages from our background script
+		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+			
+			// Send Back a success Response.
+			sendResponse({response: 'success'});
+			
+			var url = request.url;
+
+			console.log("The following url was requested: "+url);
+		});
+	}
 
     //========================================================================//
     //																		  //
@@ -213,42 +232,15 @@ TrelloObject = (function() {
      *                  the TrelloObject will manage and can then fire triggers that the Objects can catch.
      */
     function _initListeners() {
+    	var self = this;
 
+    	// Background messaging system
+	    // This Background messaging system will allow us to catch, log, and respond to AJAX requests
+	    // This means we can watch for any and all changes made to all boards, lists, and cards.
+    	_initMessages.apply(self);
     }
 
 
-    // Old Garbage, may not be neccessary but here, just in case.
-	// Trello may be cancelling any request from here. We actually may NEED the background script 
-	// to comunicate more thoroughly 
-	// We actually might not need this, nor the background script.
-	// var _watchTrello = function(){
-	// 	// Send a message to the background to begin watching for URL changes
-	// 	chrome.runtime.sendMessage({request: "StartWatch"}, function(response){
-	// 		if(response.response !== 'success') {
-	// 			console.log("_watch Trello Failed...");
-	// 		}
-	// 	});
-
-	// 	// Listen for incoming messages from our background script
-	// 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-			
-	// 		// Send Back a success Response.
-	// 		sendResponse({response: 'success'});
-			
-	// 		var url = request.url;
-
-	// 		var boardID = urlGet('b');
-	// 		// Try to get a cardID
-	// 		var cardID = urlGet('c');
-
-	// 		if(cardID !== undefined) {
-	// 			var selectedCard = self.Cards.filter(function(card){return card.data.shortLink === cardID;})[0];
-	// 			selectedCard.selected = true;
-	// 		}
-	// 		else if(boardID !== undefined)
-	// 			_deselectCards();
-
-	// 	});
-	// };
+    
     return TrelloObject;
 })();
