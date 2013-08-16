@@ -55,12 +55,13 @@ TrelloObject = (function() {
 			var checklistInfo = JSON.parse(self._trello.checklists.get(checkListId).responseText);
 			var moveToListName = checklistInfo.name;
 			moveToListName = moveToListName.match(/.*\[(.*)\].*/)[1];
-			var moveToListId = null;
-			for(var index in self.Lists){
-				if(self.Lists[index].listData.name === moveToListName){
-					moveToListId = index;
-				}
-			}
+			var listArray = Object.keys(self.Lists).map(function(key){return self.Lists[key];});
+			var moveToListId = listArray.filter(function(i){return i.listData.name === moveToListName});
+			// for(var index in self.Lists){
+			// 	if(self.Lists[index].listData.name === moveToListName){
+			// 		moveToListId = index;
+			// 	}
+			// }
 			if(moveToListId != null){
 				for(var item in checklistInfo.checkItems){
 					itemInfo = checklistInfo.checkItems[item];

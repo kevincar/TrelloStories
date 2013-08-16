@@ -25,7 +25,6 @@ Card = (function(){
 
 		// Inititory Functions
 		_addCardID.apply(self);
-		_applyActions.apply(self);
 
 		// Event Listeners
 		_initListeners.apply(self);
@@ -148,17 +147,12 @@ Card = (function(){
 		$(self.el).attr("cardid", self.cardID);
 	}
 
-	function _applyActions() {
-		var self = this;
-		$('[cardid='+self.cardID+']').on('click', '.js-card-menu', function(){
-			setTimeout(function(){
-				var actions = $('.pop-over').find('ul').eq(0);
-				var actionConvertChecklists = "<li><a class='js-convert-checklists' data='"+self.cardID+"'>Checklists to Cards.</a></li>";
-				$(actions).append(actionConvertChecklists);
-				// $('.pop-over').show();
-			}, 50);
-		});
-		$(document).on('click', '[data='+self.cardID+'].js-convert-checklists', function(){self._convertChecklistsToCards();});
+	function _applyOptions() {
+		var self = this,
+			actions = $('.pop-over').find('ul').eq(0),
+			actionConvertChecklists = "<li><a class='js-convert-checklists' data='"+self.cardID+"'>Checklists to Cards.</a></li>";
+
+		$(actions).append(actionConvertChecklists);
 	}
 
     //========================================================================//
@@ -168,7 +162,13 @@ Card = (function(){
     //========================================================================//
 
 	function _initListeners(){
-		
+		var self = this;
+
+		$('.pop-over').on('click', '[data='+self.cardID+'].js-convert-checklists', function(){self._convertChecklistsToCards();});
+
+		// DOM Manipulators
+		// Watch the Popup menu for external card actions. Ensure the Popup is loaded First.
+		$('[cardid='+self.cardID+']').on('click', '.js-card-menu', function(){setTimeout(function(){_applyOptions.apply(self);},50);});
 	}
 
 	return Card;
