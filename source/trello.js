@@ -215,7 +215,8 @@ TrelloObject = (function() {
 			
 			var url = request.url;
 
-			console.log("The following url was requested: "+url);
+			// Parse Url! - Might want to make a funciton to handle this task
+			
 		});
 	}
 
