@@ -256,6 +256,23 @@ TrelloObject = (function() {
 		}
 	}
 
+	/**
+	 * _changeCardName - This can only be called when a card object requests it.
+	 *                   This will change the name of a card
+	 */
+	 function _changeCardName(card, newName){
+	 	var self = this;
+	 	if(self._trello.authorized()){
+	 		var jqXHR = self._trello.put('cards/'+card.data.shortLink+'/name', {value: newName}),
+	 			cardInfo = JSON.parse(jqXHR.responseText);
+
+	 		self.data = cardInfo;
+ 			self.name = cardInfo.name;
+ 			return true;
+	 	}
+	 	return false;
+	 }
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -270,6 +287,9 @@ TrelloObject = (function() {
      */
     function _initListeners() {
     	var self = this;
+
+    	// Listen for requests to change Card Names
+    	$(document).on("cardNameChange", function(event, card, newName){_changeCardName.apply(self, [card, newName]);});
 
     	// Background messaging system
 	    // This Background messaging system will allow us to catch, log, and respond to AJAX requests

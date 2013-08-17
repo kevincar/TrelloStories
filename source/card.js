@@ -68,6 +68,11 @@ Card = (function(){
 		console.log(self.cardID+" was moved to the "+list.name+" list");
 	};
 
+	Card.prototype.setName = function(name) {
+		var self = this;
+		$(document).trigger("cardNameChange", [self, name]);
+	};
+
     //========================================================================//
     //																		  //
     //							Private Functions							  //
