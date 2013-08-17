@@ -63,6 +63,11 @@ Card = (function(){
 		$(self.el).closest(".list-card").css("box-shadow", '');
 	};
 
+	Card.prototype.processMove = function(list) {
+		var self = this;
+		console.log(self.cardID+" was moved to the "+list.name+" list");
+	};
+
     //========================================================================//
     //																		  //
     //							Private Functions							  //

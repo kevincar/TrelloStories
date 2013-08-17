@@ -20,20 +20,18 @@ var initMessages = function(){
 
 	// Listen for AJAX Requests and send messages back to the content scripts
 	// notifying them of the URL requested.
-	chrome.webRequest.onCompleted.addListener(function(details){
+	chrome.webRequest.onBeforeRequest.addListener(function(details){
 		var tabID = details.tabId, // The tabID of the Request
-			url = details.url,		
-
+			url = details.url;
 		// Send a message to the trello Object in the content scripts
 		// notifying that there was an HTTP request
-			messageData = {url: url};
-			
+
 		chrome.tabs.get(tabID, function(tab){
-			chrome.tabs.sendMessage(tabID, messageData, function(response){
-				if(response.response !== 'success') {
+			chrome.tabs.sendMessage(tabID, details, function(response){
+				if(typeof response === 'undefined'?true:response.response !== 'success') {
 					console.log("Failed to send the message to the content script!");
 				}
 			});
 		});
-	}, filter);
+	}, filter, ['requestBody']);
 };

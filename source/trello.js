@@ -198,12 +198,16 @@ TrelloObject = (function() {
 		return Stories;
 	}
 
+	/**
+	 * _initMessages - Initialized the Messaging system between the backend of the
+	 *                 extension and the content scripts
+	 */
 	function _initMessages(){
 		var self = this;
 		// Send a message to the background to begin watching for URL changes
 		chrome.runtime.sendMessage({request: "initMessages"}, function(response){
-			if(response.response !== 'success') {
-				console.log("Failed to initiate Messaging system with the extension backgroun.");
+			if(typeof response === 'undefined' ? true : response.response !== 'success') {
+				console.log("Failed to initiate Messaging system with the extension background.");
 			}
 		});
 
@@ -213,11 +217,43 @@ TrelloObject = (function() {
 			// Send Back a success Response.
 			sendResponse({response: 'success'});
 			
-			var url = request.url;
-
 			// Parse Url! - Might want to make a funciton to handle this task
-			
+			var url = request.url,
+				requestInfo = {
+				board: urlGet('boards', url),
+				card: urlGet('cards', url),
+				actions: decodeURIComponent(urlGet('actions', url)),
+				details: request
+			};
+
+			if(request.method === 'PUT' || request.method === 'POST') {
+				_processChanges.apply(self, [requestInfo]);
+			}
 		});
+	}
+
+	/**
+	 * _processChanges - The function should only be called when changes occur on the board
+	 *                   that require AJAX calls to the Trello API. This is to process those
+	 *                   changes for further use in this extension, such as tracking cards
+	 *					 across lists and other various changes.
+	 */
+	function _processChanges(requestInfo) {
+		var self = this;
+
+		// Process for when cards are moved across lists.
+		if(requestInfo.details.method === 'PUT' && 
+			!!requestInfo.card && 
+			!!requestInfo.details.requestBody.formData.idList
+			&& !!requestInfo.details.requestBody.formData.pos) {
+			var cardID = requestInfo.card,
+				listID = requestInfo.details.requestBody.formData.idList,
+				cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];}),
+				movedCard = cardsArray.filter(function(i){return i.data.id === cardID;})[0];
+				listsArray = Object.keys(self.Lists).map(function(key){return self.Lists[key];}),
+				list = listsArray.filter(function(i){return i.listData.id == listID;})[0];
+			movedCard.processMove(list);
+		}
 	}
 
     //========================================================================//
