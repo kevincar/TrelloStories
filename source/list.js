@@ -26,6 +26,16 @@ List = (function(){
     //																		  //
     //========================================================================//
 
+    /**
+     * setOustandingStories - If this is called on a list, it sets that list to watch for incoming cards, to 
+     *						  turn them into story cards
+     */
+     List.prototype.setOutstandingStories = function(){
+     	var self = this;
+     	$(document).on("cardMove", function(event, trello, requestInfo){_checkCardMove.apply(self, [trello, requestInfo]);});
+     };
+
+
     //========================================================================//
     //																		  //
     //							Private Functions							  //
@@ -68,6 +78,36 @@ List = (function(){
 
 		return listTextInfo[2];
 	}
+
+	/**
+	 * _checkCardMove - verfies that a 'card move' action involve this list
+	 */
+	 function _checkCardMove(trello, requestInfo) {
+	 	var self = this;
+	 		listID = requestInfo.details.requestBody.formData.idList[0];
+
+	 	if(self.listData.id == listID) {
+	 		var movedCardID = requestInfo.card,
+	 			cardsArray = Object.keys(trello.Cards).map(function(key){return trello.Cards[key];}),
+	 			card = cardsArray.filter(function(i){return i.data.id === movedCardID;}),
+	 			card = card.length>0?card[0]:null;
+
+	 		// Turn the card into a story
+	 		if(card) {
+	 			// Get next StoryID
+	 			var storyID = "00" + trello.Stories.length+1,
+	 				storyID = storyID.length>3?storyID.substring(storyID.length-3):storyID;
+
+		 		// change the name
+		 		card.setName(storyID+" "+card.name);
+
+		 		// add the story data to our trelloObject
+		 		var cardData = card.data;
+		 		var newStory = new Story(cardData, trello.Cards);
+		 		trello.Stories.push(newStory);
+	 		}
+	 	}
+	 }
 
     //========================================================================//
     //																		  //

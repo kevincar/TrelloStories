@@ -87,6 +87,24 @@ TrelloObject = (function() {
 		return null;
 	};
 
+	/**
+	 * setOutstandingStoires - Sets which list to set as the start for stories in a sprint
+	 *						   This sets up a listener on that list so that cards moved into
+	 * 						   that list become stories.
+	 */
+	TrelloObject.prototype.setOutstandingStories = function(listName) {
+		var self = this,
+			listArray = Object.keys(self.Lists).map(function(key){return self.Lists[key];}),
+			list = listArray.filter(function(i){return i.name == listName}),
+			list = list.length>0?list[0]:null;
+
+		if(!list) {
+			return console.log("Could not find the list with the name: "+listName);
+		}
+
+		list.setOutstandingStories();
+	};
+
     //========================================================================//
     //																		  //
     //							Private Functions							  //
@@ -237,6 +255,8 @@ TrelloObject = (function() {
 	 *                   that require AJAX calls to the Trello API. This is to process those
 	 *                   changes for further use in this extension, such as tracking cards
 	 *					 across lists and other various changes.
+	 *                   This function should only trigger events that other objects can 
+	 *                   handle where appropriate to avoid tangling responsibilites.
 	 */
 	function _processChanges(requestInfo) {
 		var self = this;
@@ -246,13 +266,7 @@ TrelloObject = (function() {
 			!!requestInfo.card && 
 			!!requestInfo.details.requestBody.formData.idList
 			&& !!requestInfo.details.requestBody.formData.pos) {
-			var cardID = requestInfo.card,
-				listID = requestInfo.details.requestBody.formData.idList,
-				cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];}),
-				movedCard = cardsArray.filter(function(i){return i.data.id === cardID;})[0];
-				listsArray = Object.keys(self.Lists).map(function(key){return self.Lists[key];}),
-				list = listsArray.filter(function(i){return i.listData.id == listID;})[0];
-			movedCard.processMove(list);
+			$(document).trigger('cardMove', [self, requestInfo]);
 		}
 	}
 

@@ -20,7 +20,6 @@ Story = (function(){
 		// Initializer Functions
 		_applyID.apply(self);
 		_initListeners.apply(self);
-		// self.applyActions();
 	}
 
 	//========================================================================//
