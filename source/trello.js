@@ -231,6 +231,7 @@ TrelloObject = (function() {
 
 		// Listen for incoming messages from our background script
 		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+			console.log(window.r = request);
 			
 			// Send Back a success Response.
 			sendResponse({response: 'success'});
@@ -268,6 +269,8 @@ TrelloObject = (function() {
 			&& !!requestInfo.details.requestBody.formData.pos) {
 			$(document).trigger('cardMove', [self, requestInfo]);
 		}
+
+		// Process for when Tasks are added to the checklist of a card.
 	}
 
 	/**

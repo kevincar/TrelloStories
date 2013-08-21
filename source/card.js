@@ -18,8 +18,8 @@ Card = (function(){
 		self.cardID = cardData.idShort;
 		self.storyID = _getCardStoryID.apply(self);
 		self.name = _getCardName.apply(self);
-		self.listText = _getCardListText.apply(self);
-		self.listName = _getCardListName.apply(self);
+		self.listText = _getCardListText.apply(self);  // Should probably Be deprecated
+		self.listName = _getCardListName.apply(self);  // Should probably Be deprecated
 		self.type = _getCardType.apply(self);
 		self.selected = false;
 
@@ -160,6 +160,29 @@ Card = (function(){
 		$(actions).append(actionConvertChecklists);
 	}
 
+	// Process a Card Move
+	function _processMove(trello, requestInfo) {
+		var self = this;
+		var movedCardID = requestInfo.card,
+			cardsArray = Object.keys(trello.Cards).map(function(key){return trello.Cards[key];}),
+ 			card = cardsArray.filter(function(i){return i.data.id === movedCardID;}),
+ 			card = card.length>0?card[0]:null;
+
+		// Ensure that the move was on THIS card
+		if(card.cardID == this.cardID) {
+			// It'd be nice to figure a better way, but for some reason we need to wait.
+			setTimeout(function(){_updateData.apply(self);}, 100);
+		}
+	}
+
+	// Update the data of the card by making a request to the API
+	function _updateData() {
+		var self = this;
+		Trello.rest("GET", "cards/"+self.data.id).then(function(data){
+			self.data = data;
+		});
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -170,6 +193,9 @@ Card = (function(){
 		var self = this;
 
 		$('.pop-over').on('click', '[data='+self.cardID+'].js-convert-checklists', function(){self._convertChecklistsToCards();});
+
+		// Register card moves
+		$(document).on("cardMove", function(event, trello, requestInfo){_processMove.apply(self, [trello, requestInfo]);});
 
 		// DOM Manipulators
 		// Watch the Popup menu for external card actions. Ensure the Popup is loaded First.

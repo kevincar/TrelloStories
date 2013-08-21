@@ -100,6 +100,7 @@ List = (function(){
 
 		 		// change the name
 		 		card.setName(storyID+" "+card.name);
+		 		card.type = "Stories";
 
 		 		// add the story data to our trelloObject
 		 		card.storyID = storyID;
