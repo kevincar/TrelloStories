@@ -93,17 +93,17 @@ List = (function(){
 	 			card = card.length>0?card[0]:null;
 
 	 		// Turn the card into a story
-	 		if(card) {
+	 		if(card && !card.storyID) {
 	 			// Get next StoryID
-	 			var storyID = "00" + trello.Stories.length+1,
+	 			var storyID = "00" + parseInt(trello.Stories.length+1),
 	 				storyID = storyID.length>3?storyID.substring(storyID.length-3):storyID;
 
 		 		// change the name
 		 		card.setName(storyID+" "+card.name);
 
 		 		// add the story data to our trelloObject
-		 		var cardData = card.data;
-		 		var newStory = new Story(cardData, trello.Cards);
+		 		card.storyID = storyID;
+		 		var newStory = new Story(card, trello.Cards);
 		 		trello.Stories.push(newStory);
 	 		}
 	 	}
