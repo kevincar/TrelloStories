@@ -175,6 +175,17 @@ Card = (function(){
 		}
 	}
 
+	// Process what happens when editing a card
+	function _processEdit(trello, requestInfo) {
+		var self = this,
+			requestedCardID = requestInfo.card;
+
+		// Ensure that the request was for THIS card
+		if(this.data.id === requestedCardID) {
+
+		}
+	}
+
 	// Update the data of the card by making a request to the API
 	function _updateData() {
 		var self = this;
@@ -196,6 +207,9 @@ Card = (function(){
 
 		// Register card moves
 		$(document).on("cardMove", function(event, trello, requestInfo){_processMove.apply(self, [trello, requestInfo]);});
+
+		// Register card Edits
+		$(document).on("cardEdit", function(event, trello, requestInfo){_processEdit.apply(self, [trello, requestInfo]);});
 
 		// DOM Manipulators
 		// Watch the Popup menu for external card actions. Ensure the Popup is loaded First.

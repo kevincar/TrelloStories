@@ -119,6 +119,34 @@ Story = (function(){
 		$(actions).append(actionConvertChecklists);
 	}
 
+	// effect the popOver's for different context. we may want to have applyOptions be called from here instead.
+	function _processPopOverLoad(event, record) {
+		var self = this;
+		// Add actions for checkLists
+		// Ensure that they're in edit mode
+		if(urlGet('c')!==undefined) {
+			// WE only want the content change and when it's getting loaded
+			var display = $(".pop-over").attr("style").split(/[:;]\s?/gi).filter(function(v,k,a){return a[k-1]=='display';});
+			var popOverTitle = $('.pop-over span.header-title').text();
+			var popOverIsOpen = display.length>0?display=='block':false;
+			var isCheckListPopOver = popOverTitle.indexOf('[')>-1;
+			if(event.target == $(".pop-over .content")[0] && popOverIsOpen && isCheckListPopOver) {
+				_applyChecklistOptions.apply(self);
+			}
+		}
+	}
+
+	// Called when needed to apply new options/actions to the checklist menu
+	// Might be nice to create a popOverAction class that can handle stuff like this.
+	function _applyChecklistOptions() {
+		var self = this;
+		var card = self.storyCard;
+		var actions = $(".pop-over").find('ul').eq(0);
+		var actionConvertChecklists = "<li><a class='js-convert-checklists' data='"+card.cardID+"'>Checklist To Cards</a></li>";
+
+		$(actions).append(actionConvertChecklists);
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -134,9 +162,14 @@ Story = (function(){
 		$('.pop-over').on('click', '[data='+card.storyID+'].js-is-story-complete', function(){_handlerIsComplete.apply(self);});
 		$('.pop-over').on('click', '[data='+card.storyID+'].js-mark-story-tasks', function(){_handlerMarkTasks.apply(self);});
 
+		// Watch for checkListItems added to this story card.
+		$(document).on('checkItemAdd', function(event, trello, requestInfo){_addTaskFromCheckList});
+
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded
     	$('[storyid='+self.storyID+']').on('click', '.js-card-menu', function(){setTimeout(function(){applyOptions.apply(self);}, 50);});
+    	$('.pop-over').on('contentChange', function(event, record){_processPopOverLoad.apply(self, arguments);});
+    	// $(document).on('click', '.js-open-check-list-menu', function(){console.log("HEY");});
     	
     	// Listens for completed Tasks.
     	self.watchID = _watchTasks.apply(self, [5]);

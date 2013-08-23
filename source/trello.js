@@ -54,23 +54,28 @@ TrelloObject = (function() {
 		{
 			var checklistInfo = JSON.parse(self._trello.checklists.get(checkListId).responseText);
 			var moveToListName = checklistInfo.name;
-			moveToListName = moveToListName.match(/.*\[(.*)\].*/)[1];
+			moveToListName = moveToListName.match(/.*\[(.*)\].*/);
+			moveToListName = moveToListName?moveToListName[1]:null;
 			var listArray = Object.keys(self.Lists).map(function(key){return self.Lists[key];});
 			var moveToListId = listArray.filter(function(i){return i.listData.name === moveToListName});
+			moveToListId = moveToListId?moveToListId[0].listData.id:null;
 			// for(var index in self.Lists){
 			// 	if(self.Lists[index].listData.name === moveToListName){
 			// 		moveToListId = index;
 			// 	}
 			// }
-			if(moveToListId != null){
+			if(moveToListId !== null && moveToListId.length>0){
 				for(var item in checklistInfo.checkItems){
 					itemInfo = checklistInfo.checkItems[item];
 					originCard = self.Cards[checklistInfo.idCard];
-					var storyId = null;
+					var storyId = originCard.storyID;
 					if(arguments.length > 1)
 						storyId = arguments[1];
 					self.createCard(moveToListId,{name:((storyId!=null)?storyId+" ":"")+itemInfo.name,desc:"**Parent Card:** `"+originCard.name+"`\n**Parent List:** `"+originCard.listText+"`\n\n---"});
 				}
+			}
+			else {
+				console.log("Failed to find list to create cards in.");
 			}
 		}
 	};
@@ -241,12 +246,17 @@ TrelloObject = (function() {
 				requestInfo = {
 				board: urlGet('boards', url),
 				card: urlGet('cards', url),
+				checklist: urlGet('checklist', url),
 				actions: decodeURIComponent(urlGet('actions', url)),
 				details: request
 			};
 
 			if(request.method === 'PUT' || request.method === 'POST') {
 				_processChanges.apply(self, [requestInfo]);
+			}
+
+			if(request.method === 'GET') {
+				_processRequest.apply(self, [requestInfo]);
 			}
 		});
 	}
@@ -268,9 +278,28 @@ TrelloObject = (function() {
 			!!requestInfo.details.requestBody.formData.idList
 			&& !!requestInfo.details.requestBody.formData.pos) {
 			$(document).trigger('cardMove', [self, requestInfo]);
+			return true;
 		}
 
 		// Process for when Tasks are added to the checklist of a card.
+		if(requestInfo.details.method === 'POST' &&
+			!!requestInfo.checklist &&
+			urlGet(requestInfo.checklist, requestInfo.details.url) === 'checkItem') {
+			$(document).trigger('checkItemAdd', [self, requestInfo]);
+			return true;
+		}
+	}
+
+	/**
+	 * _processRequest - Processes GET requests
+	 */
+	function _processRequest(requestInfo) {
+		var self = this;
+
+		// Process for when cards are clicked on to edit them
+		if(!!requestInfo.card && !!requestInfo.actions) {
+			$(document).trigger("cardEdit", [self, requestInfo]);
+		}
 	}
 
 	/**
