@@ -71,7 +71,7 @@ TrelloObject = (function() {
 					var storyId = originCard.storyID;
 					if(arguments.length > 1)
 						storyId = arguments[1];
-					self.createCard(moveToListId,{name:((storyId!=null)?storyId+" ":"")+itemInfo.name,desc:"**Parent Card:** `"+originCard.name+"`\n**Parent List:** `"+originCard.listText+"`\n\n---"});
+					self.createCard(moveToListId,storyId,{name:((storyId!=null)?storyId+" ":"")+itemInfo.name,desc:"**Parent Card:** `"+originCard.name+"`\n**Parent List:** `"+originCard.listText+"`\n\n---"});
 				}
 			}
 			else {
@@ -80,13 +80,16 @@ TrelloObject = (function() {
 		}
 	};
 
-	TrelloObject.prototype.createCard = function(listId, cardData){
+	TrelloObject.prototype.createCard = function(listId, storyId, cardData){
 		var self = this;
 		if(self._trello.authorized())
 		{
 			//card data should {name:value[,desc:value]}
 			var cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
 			self.Cards[cardInfo.id] = new Card(cardInfo);
+			var storyCard = self.Stories.filter(function(i){return i.storyID == storyId;});
+			storyCard = storyCard.length>0?storyCard[0]:null;
+			storyCard.taskCards.push(self.Cards[cardInfo.id]);
 			return cardInfo.id;
 		}
 		return null;
