@@ -337,6 +337,14 @@ TrelloObject = (function() {
 			checkItem = checkItem.length>0?checkItem[0]:null;
 			$(document).trigger('checkItemDelete', [self, requestInfo, checkItem]);
 		}
+
+		// Process when any cards are deleted
+		if(!!requestInfo.card && !urlGet(requestInfo.card, requestInfo.url)) {
+			var cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];});
+			var card = cardsArray.filter(function(i){return i.data.id === requestInfo.card;});
+			card = card.length>0?card[0]:null
+			$(document).trigger('cardDelete', [self, requestInfo, card]);
+		}
 	}
 
 	/**

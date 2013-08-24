@@ -186,6 +186,24 @@ Story = (function(){
 			card = card.length>0?card[0]:null;
 			if(card) {
 				trello.deleteCard(card);
+				self.taskCards = self.taskCards.filter(function(i){return i.data.id !== card.data.id;});
+			}
+		}
+	}
+
+	// Delete a checkItem after the corresponding task(card) is deleted
+	function _deletedCard(trello, requestInfo, card) {
+		var self = this;
+
+		// THIS card
+		if(self.storyID === card.storyID && card) {
+			var storyCheckLists = JSON.parse(trello._trello.get("cards/"+self.storyCard.data.id+"/checklists").responseText);
+			var allCheckItems = storyCheckLists.map(function(checkList){for(i in checkList.checkItems){checkList.checkItems[i].checkListId = checkList.id;return checkList.checkItems[i];}});
+			var checkItemToDelete = allCheckItems.filter(function(i){return i.name == card.name;});
+			checkItemToDelete = checkItemToDelete.length>0?checkItemToDelete[0]:null;
+			if(trello._trello.authorized()){
+				var response = JSON.parse(trello._trello.delete("checklists/"+checkItemToDelete.checkListId+"/checkItems/"+checkItemToDelete.id).responseText);
+				self.taskCards = self.taskCards.filter(function(i){return i.data.id !== card.data.id;});
 			}
 		}
 	}
@@ -210,7 +228,9 @@ Story = (function(){
 
 		// Watch for checkItem deletiongs on this card. 
 		$(document).on('checkItemDelete', function(event, trello, requestInfo, checkItem){_deleteTaskFromCheckList.apply(self, [trello, requestInfo, checkItem]);});
-		$(document).on('click', '.js-delete-item', function(){console.log("Checklist item delete button pressed!");});
+		
+		// Watch for task deletes
+		$(document).on('cardDelete', function(event, trello, requestInfo, card){_deletedCard.apply(self, [trello, requestInfo, card]);});
 
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded
