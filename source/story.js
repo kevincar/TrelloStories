@@ -175,6 +175,21 @@ Story = (function(){
 		}
 	}
 
+	// Delete a card after a task was deleted
+	function _deleteTaskFromCheckList(trello, requestInfo, checkItem) {
+		var self = this;
+
+		// THIS card
+		if(self.storyCard.data.id == requestInfo.card && checkItem) {
+			var cardsArray = Object.keys(trello.Cards).map(function(k){return trello.Cards[k];});
+			var card = cardsArray.filter(function(i){return i.name === checkItem.name;});
+			card = card.length>0?card[0]:null;
+			if(card) {
+				trello.deleteCard(card);
+			}
+		}
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -192,6 +207,10 @@ Story = (function(){
 
 		// Watch for checkListItems added to this story card. Wait till the post is clear.
 		$(document).on('checkItemAdd', function(event, trello, requestInfo){setTimeout(function(){_addTaskFromCheckList.apply(self, [trello, requestInfo]);}, 100);});
+
+		// Watch for checkItem deletiongs on this card. 
+		$(document).on('checkItemDelete', function(event, trello, requestInfo, checkItem){_deleteTaskFromCheckList.apply(self, [trello, requestInfo, checkItem]);});
+		$(document).on('click', '.js-delete-item', function(){console.log("Checklist item delete button pressed!");});
 
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded

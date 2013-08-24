@@ -106,11 +106,11 @@ Card = (function(){
 		var self = this;
 		if(self.text === undefined)
 			self.text = self.data.name;
-		var cardTextInfo = self.text.match(/([0-9][0-9][0-9]).*/);
+		var cardTextInfo = self.text.match(/([0-9][0-9][0-9])\s?(.*)/);
 		if(cardTextInfo === null)
 			return self.text;
 
-		return self.text.split(cardTextInfo[1])[1];
+		return cardTextInfo[2];
 	}
 
 	// Get Card List Text

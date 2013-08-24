@@ -97,6 +97,16 @@ TrelloObject = (function() {
 		return null;
 	};
 
+	// Delete a card
+	TrelloObject.prototype.deleteCard = function(card) {
+		var self = this;
+		if(self._trello.authorized()) {
+			var response = JSON.parse(self._trello.delete("cards/"+card.data.id).responseText);
+			delete self.Cards[card.data.id];
+		}
+		return null;
+	}
+
 	/**
 	 * setOutstandingStoires - Sets which list to set as the start for stories in a sprint
 	 *						   This sets up a listener on that list so that cards moved into
@@ -252,6 +262,7 @@ TrelloObject = (function() {
 				board: urlGet('boards', url),
 				card: urlGet('cards', url),
 				checklist: urlGet('checklist', url),
+				checkItem: urlGet('checkItem', url),
 				actions: decodeURIComponent(urlGet('actions', url)),
 				details: request
 			};
@@ -262,6 +273,10 @@ TrelloObject = (function() {
 
 			if(request.method === 'GET') {
 				_processRequest.apply(self, [requestInfo]);
+			}
+
+			if(request.method === 'DELETE') {
+				_processDelete.apply(self, [requestInfo]);
 			}
 		});
 	}
@@ -304,6 +319,23 @@ TrelloObject = (function() {
 		// Process for when cards are clicked on to edit them
 		if(!!requestInfo.card && !!requestInfo.actions) {
 			$(document).trigger("cardEdit", [self, requestInfo]);
+		}
+	}
+
+	// process delete
+	function _processDelete(requestInfo) {
+		var self = this;
+
+		// Process of when any checkItems are deleted
+		if(!!requestInfo.checkItem) {
+			// we need to be a bit more specific with Deletions. 
+			// We must pass in needed information here since deletions could be processed
+			// before the trigger is picked up, then id's will be usless.
+			var checklistData = JSON.parse(self._trello.checklists.get(requestInfo.checklist).responseText);
+			var checkItemId = requestInfo.checkItem;
+			var checkItem = checklistData.checkItems.filter(function(i){return i.id === checkItemId;});
+			checkItem = checkItem.length>0?checkItem[0]:null;
+			$(document).trigger('checkItemDelete', [self, requestInfo, checkItem]);
 		}
 	}
 
