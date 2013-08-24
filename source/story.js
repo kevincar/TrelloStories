@@ -147,6 +147,34 @@ Story = (function(){
 		$(actions).append(actionConvertChecklists);
 	}
 
+	// Adding a checklist auto
+	function _addTaskFromCheckList(trello, requestInfo) {
+		var self = this;
+
+		// THIS card
+		if(self.storyCard.data.id == requestInfo.card) {
+			// Get data from the checklist
+			var checkListData = JSON.parse(trello._trello.checklists.get("52145a84f68a4ae5690023c5").responseText);
+			var destListName = checkListData.name.match(/.*\[(.*)\].*/);
+			destListName = destListName?destListName[1]:null;
+			var listArray = Object.keys(trello.Lists).map(function(key){return trello.Lists[key];});
+			var destListId = listArray.filter(function(i){return i.listData.name === destListName});
+			destListId = destListId.length>0?destListId[0].listData.id:null;
+			if(destListId !== null){
+				var mostRecentCheckItem = checkListData.checkItems.pop();
+				var newCardName = self.storyID + " " + mostRecentCheckItem.name;
+				var newCardData = {
+					name: newCardName,
+					desc: "**Parent Card:** `"+self.storyCard.name+"`\n**Parent List:** `"+self.storyCard.listText+"`\n\n---"
+				};
+				trello.createCard(destListId, self.storyID, newCardData);
+			}
+			else {
+				console.error("Failed to add task from checklist: Couldn't find destination list name in checklist name.");
+			}
+		}
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -162,8 +190,8 @@ Story = (function(){
 		$('.pop-over').on('click', '[data='+card.storyID+'].js-is-story-complete', function(){_handlerIsComplete.apply(self);});
 		$('.pop-over').on('click', '[data='+card.storyID+'].js-mark-story-tasks', function(){_handlerMarkTasks.apply(self);});
 
-		// Watch for checkListItems added to this story card.
-		$(document).on('checkItemAdd', function(event, trello, requestInfo){_addTaskFromCheckList});
+		// Watch for checkListItems added to this story card. Wait till the post is clear.
+		$(document).on('checkItemAdd', function(event, trello, requestInfo){setTimeout(function(){_addTaskFromCheckList.apply(self, [trello, requestInfo]);}, 100);});
 
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded

@@ -87,9 +87,11 @@ TrelloObject = (function() {
 			//card data should {name:value[,desc:value]}
 			var cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
 			self.Cards[cardInfo.id] = new Card(cardInfo);
-			var storyCard = self.Stories.filter(function(i){return i.storyID == storyId;});
-			storyCard = storyCard.length>0?storyCard[0]:null;
-			storyCard.taskCards.push(self.Cards[cardInfo.id]);
+			if(storyId !== null) {
+				var storyCard = self.Stories.filter(function(i){return i.storyID == storyId;});
+				storyCard = storyCard.length>0?storyCard[0]:null;
+				storyCard.taskCards.push(self.Cards[cardInfo.id]);
+			}
 			return cardInfo.id;
 		}
 		return null;
