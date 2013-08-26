@@ -22,6 +22,8 @@ Card = (function(){
 		self.listName = _getCardListName.apply(self);  // Should probably Be deprecated
 		self.type = _getCardType.apply(self);
 		self.selected = false;
+		self.checkItemID = null;	// Should be linked differently once everything is object oriented.
+		self.checkListID = null;
 
 		// Inititory Functions
 		_addCardID.apply(self);

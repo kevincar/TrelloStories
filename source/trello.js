@@ -24,6 +24,7 @@ TrelloObject = (function() {
 		self.view = '';
 		self.errorHandler = new ErrorHandler();
 		self._trello = Trello;
+		self.requestLogger = [];
 
 		// Authorize
 		self._trello.authorize({
@@ -251,6 +252,12 @@ TrelloObject = (function() {
 
 		// Listen for incoming messages from our background script
 		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+			// Log the request (NO multiples)
+			// var alreadyRequested = self.requestLogger.indexOf(request.requestId) !== -1;
+			// if(alreadyRequested)
+			// 	return false;
+
+			// self.requestLogger.push(request.requestId);
 			console.log(window.r = request);
 			
 			// Send Back a success Response.
@@ -308,6 +315,35 @@ TrelloObject = (function() {
 			$(document).trigger('checkItemAdd', [self, requestInfo]);
 			return true;
 		}
+
+		// Process for when checkItems are renamed
+		// it would be better if we created more objects, like checklist objects and checkItem
+		// objects that we could query instead of calling the API. that way the API would only
+		// need to be called when to sync the data.
+		if(requestInfo.details.method === 'PUT' &&
+			!!requestInfo.checklist &&
+			!!requestInfo.checkItem &&
+			!!requestInfo.details.requestBody.formData.name) {
+			var checklistData = JSON.parse(self._trello.checklists.get(requestInfo.checklist).responseText);
+			var checkItemId = requestInfo.checkItem;
+			var checkItem = checklistData.checkItems.filter(function(i){return i.id === checkItemId;});
+			checkItem = checkItem.length>0?checkItem[0]:null;
+			var cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];});
+			var card = cardsArray.filter(function(i){return i.checkItemID == checkItem.id;});
+			card = card.length>0?card[0]:null
+			$(document).trigger('checkItemNameChange', [self, requestInfo, card]);
+			return true;
+		}
+
+		// process for when task cards are renamed
+		if(requestInfo.details.method === 'PUT' &&
+			!!requestInfo.card &&
+			!!requestInfo.details.requestBody.formData.name) {
+			var cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];});
+			var card = cardsArray.filter(function(i){return i.data.id == requestInfo.card});
+			card = card.length>0?card[0]:null;
+			$(document).trigger('cardNameChange', [self, requestInfo, card]);
+		}
 	}
 
 	/**
@@ -354,7 +390,7 @@ TrelloObject = (function() {
 	 function _changeCardName(card, newName){
 	 	var self = this;
 	 	if(self._trello.authorized()){
-	 		var jqXHR = self._trello.put('cards/'+card.data.shortLink+'/name', {value: newName}),
+	 		var jqXHR = self._trello.put('cards/'+card.data.id+'/name', {value: newName}),
 	 			cardInfo = JSON.parse(jqXHR.responseText);
 
 	 		self.data = cardInfo;

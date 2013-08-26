@@ -46,6 +46,24 @@ Story = (function(){
 	function _getTasks(){
 		var self = this;
 		var storyTaskCards = self.cards.filter(function(i){return (i.type=="Tasks" && i.storyID==self.storyCard.storyID);});
+		// Fix the cards so that they have checkItemIDs
+		// this needs to be improved so it's not so specific
+		var storyCheckLists = JSON.parse(Trello.get("cards/"+self.storyCard.data.id+"/checklists").responseText);
+		var storyCheckItems = storyCheckLists.map(function(checkList){var checkItems = checkList.checkItems;for(var i in checkItems){var checkItem = checkItems[i]; return checkItem}});
+		for(var indexA in storyCheckLists) {
+			var checkList = storyCheckLists[indexA];
+			var checkListItems = checkList.checkItems;
+			for(var indexB in checkListItems) {
+				var checkItem = storyCheckItems[indexB];
+				for(var indexC in storyTaskCards) {
+					var storyTaskCard = storyTaskCards[indexC];
+					if(checkItem.name === storyTaskCard.name){
+						storyTaskCard.checkItemID = checkItem.id;
+						storyTaskCard.checkListID = checkList.id;
+					}
+				}
+			}
+		}
 		return storyTaskCards;
 	}
 
@@ -154,7 +172,7 @@ Story = (function(){
 		// THIS card
 		if(self.storyCard.data.id == requestInfo.card) {
 			// Get data from the checklist
-			var checkListData = JSON.parse(trello._trello.checklists.get("52145a84f68a4ae5690023c5").responseText);
+			var checkListData = JSON.parse(trello._trello.checklists.get(requestInfo.checklist).responseText);
 			var destListName = checkListData.name.match(/.*\[(.*)\].*/);
 			destListName = destListName?destListName[1]:null;
 			var listArray = Object.keys(trello.Lists).map(function(key){return trello.Lists[key];});
@@ -167,7 +185,9 @@ Story = (function(){
 					name: newCardName,
 					desc: "**Parent Card:** `"+self.storyCard.name+"`\n**Parent List:** `"+self.storyCard.listText+"`\n\n---"
 				};
-				trello.createCard(destListId, self.storyID, newCardData);
+				var newCardId = trello.createCard(destListId, self.storyID, newCardData);
+				trello.Cards[newCardId].checkItemID = mostRecentCheckItem.id;
+				trello.Cards[newCardId].checkListID = checkListData.id;
 			}
 			else {
 				console.error("Failed to add task from checklist: Couldn't find destination list name in checklist name.");
@@ -208,6 +228,45 @@ Story = (function(){
 		}
 	}
 
+	// Used for when a checkItem is renamed so that the card(task) will be synced
+	function _renameTaskCard(trello, requestInfo, card) {
+		var self = this;
+
+		// THIS card
+		if(self.storyCard.data.id === requestInfo.card && card) {
+			var newCheckItemName = requestInfo.details.requestBody.formData.name[0];
+			var newCardName = self.storyID + " " + newCheckItemName;
+			if(trello._trello.authorized()) {
+				card.setName(newCardName);
+				// Replace the card with the updated one.
+				self.taskCards = self.taskCards.filter(function(i){return i.data.id !== card.data.id;});
+				self.taskCards.push(card);
+			}
+		}
+	}
+
+	// Used for when a task card is renamed so the checkItem will be synced
+	function _renameTaskCheckItem(trello, requestInfo, card) {
+		var self = this;
+
+		// THIS card
+		if(self.storyID === card.storyID) {
+			var checkItem
+			if(trello._trello.authorized()) {
+				var newName = requestInfo.details.requestBody.formData.name[0].match(/[0-9][0-9][0-9]\s(.*)/)[1];
+				var checkItemData = {
+					idChecklist: card.checkListID,
+					idCheckItem: card.checkItemID,
+					value: newName
+				};
+				var response = JSON.parse(trello._trello.put("cards/"+self.storyCard.data.id+"/checklist/"+card.checkListID+"/checkItem/"+card.checkItemID+"/name", checkItemData).responseText);
+				self.taskCards = self.taskCards.filter(function(i){return i.data.id !== card.data.id;});
+				self.taskCards.push(card);
+				trello.Cards[card.data.id] = card;
+			}
+		}
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -231,6 +290,12 @@ Story = (function(){
 		
 		// Watch for task deletes
 		$(document).on('cardDelete', function(event, trello, requestInfo, card){_deletedCard.apply(self, [trello, requestInfo, card]);});
+
+		// Watch for task name changes
+		$(document).on('checkItemNameChange', function(event, trello, requestInfo, card){_renameTaskCard.apply(self, [trello, requestInfo, card]);});
+
+		// Wathc for card renames
+		$(document).on('cardNameChange', function(event, trello, requestInfo, card){_renameTaskCheckItem.apply(self, [trello, requestInfo, card]);});
 
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded
