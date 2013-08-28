@@ -88,6 +88,7 @@ TrelloObject = (function() {
 			//card data should {name:value[,desc:value]}
 			var cardInfo = JSON.parse(self._trello.post("lists/"+listId+"/cards",cardData).responseText);
 			self.Cards[cardInfo.id] = new Card(cardInfo);
+			self.Cards[cardInfo.id].type = 'Tasks';
 			if(storyId !== null) {
 				var storyCard = self.Stories.filter(function(i){return i.storyID == storyId;});
 				storyCard = storyCard.length>0?storyCard[0]:null;
@@ -205,6 +206,7 @@ TrelloObject = (function() {
 			self._trello.rest("GET","board/"+self.board+"/cards", function(cards){
 				for(var index in cards) {
 					var card = new Card(cards[index]);
+					card.trelloObject = self;
 					Cards[card.data.id] = card;
 				}
 			},self.errorHandler.ajaxError);
@@ -231,6 +233,7 @@ TrelloObject = (function() {
 			if(card.storyID !== null && card.type === 'Stories'){
 				var storyCard = self.Cards[index];
 				var story = new Story(storyCard, self.Cards);
+				story.trelloObject = self;
 				Stories.push(story);
 			}
 		}
@@ -253,11 +256,11 @@ TrelloObject = (function() {
 		// Listen for incoming messages from our background script
 		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 			// Log the request (NO multiples)
-			// var alreadyRequested = self.requestLogger.indexOf(request.requestId) !== -1;
-			// if(alreadyRequested)
-			// 	return false;
+			var alreadyRequested = self.requestLogger.indexOf(request.requestId) !== -1;
+			if(alreadyRequested)
+				return false;
 
-			// self.requestLogger.push(request.requestId);
+			self.requestLogger.push(request.requestId);
 			console.log(window.r = request);
 			
 			// Send Back a success Response.
@@ -342,7 +345,10 @@ TrelloObject = (function() {
 			var cardsArray = Object.keys(self.Cards).map(function(key){return self.Cards[key];});
 			var card = cardsArray.filter(function(i){return i.data.id == requestInfo.card});
 			card = card.length>0?card[0]:null;
-			$(document).trigger('cardNameChange', [self, requestInfo, card]);
+			if(card.type === 'Tasks') 
+				$(document).trigger('cardNameChangeFromTask', [self, requestInfo, card]);
+			else if(card.type === 'Stories')
+				$(document).trigger('storyNameChange', [self, requestInfo, card]);
 		}
 	}
 
@@ -416,7 +422,7 @@ TrelloObject = (function() {
     	var self = this;
 
     	// Listen for requests to change Card Names
-    	$(document).on("cardNameChange", function(event, card, newName){_changeCardName.apply(self, [card, newName]);});
+    	$(document).on("card_cardNameChange", function(event, card, newName){_changeCardName.apply(self, [card, newName]);});
 
     	// Background messaging system
 	    // This Background messaging system will allow us to catch, log, and respond to AJAX requests

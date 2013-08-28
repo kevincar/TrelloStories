@@ -16,6 +16,7 @@ Story = (function(){
 		self.storyID = card.storyID;
 		self.taskCards = _getTasks.apply(self);
 		self.completedTaskList = 'Ready for QA';
+		self.trelloObject = null;
 
 		// Initializer Functions
 		_applyID.apply(self);
@@ -33,6 +34,84 @@ Story = (function(){
 		for(var index in self.taskCards) {
 			var card = self.taskCards[index];
 			$(card.el).css('background-color', 'pink');
+		}
+	};
+
+	Story.prototype.setStoryID = function(storyID) {
+		var self = this;
+		var storyID = parseInt(storyID);
+		storyID = '00' + storyID;
+		storyID = storyID.length>3?storyID.substring(storyID.length-3):storyID;
+
+		// Update Trello.stories
+		// Remove the story 
+		self.trelloObject.Stories = self.trelloObject.Stories.filter(function(i){return i.storyID !== self.storyID;});
+		// reset the story card ID
+		self.storyCard.setStoryID(storyID);
+		self.storyID = storyID;
+		// Add the story
+		self.trelloObject.Stories.push(self);
+	
+
+		//change all Task card names and ID's to reflect the change 
+		var taskCards = self.taskCards;
+		for(var taskCardIndex in taskCards) {
+			var taskCard = taskCards[taskCardIndex];
+			taskCard.setStoryID(storyID);
+		}
+		return true;
+	};
+
+	Story.prototype.removeTask = function(cardid) {
+		var self = this;
+		var taskCard = self.taskCards.filter(function(i){return i.data.id === cardid;});
+		taskCard = taskCard.length>0?taskCard[0]:null;
+		if(!taskCard)
+			return console.error("Card "+cardid+" is not a task of story "+self.storyID);
+
+
+		// Remove the checkItem from the Story Card
+		self.removeTaskCheckItem(cardid);
+		// Remove the story ID from the card name
+		taskCard.removeFromStory();
+		// Remove from task list
+		self.taskCards = self.taskCards.filter(function(i){return i.data.id !== cardid;});
+	};
+
+	Story.prototype.removeTaskCheckItem = function(cardid) {
+		var self = this,
+			taskCheckItem = _getTaskCheckItem.apply(self, [cardid]),
+			checkItem = taskCheckItem;
+		var checkListID = checkItem.checkListID;
+		if(self.trelloObject._trello.authorized()) {
+			var data = {
+				idCheckItem: checkItem.id
+			};
+			var jqXHR = self.trelloObject._trello.delete("checklists/"+checkListID+"/checkItems/"+checkItem.id, data);
+			return JSON.parse(jqXHR.responseText);
+		}
+	};
+
+	Story.prototype.addTaskCheckItem = function(cardid) {
+		var self = this,
+			checklists = _getStoryCheckLists.apply(this);
+
+		//get the first checklsit
+		var checklist = checklists[0];
+		
+		// Make sure that the checkItem doesn't already exist
+		var checkItems = JSON.parse(self.trelloObject._trello.get("checklists/"+checklist.id+"/checkItems").responseText);
+		var checkItem = checkItems.filter(function(i){return i.id === self.trelloObject.Cards[cardid].checkItemID;});
+		checkItem = checkItem.length>0?checkItem[0]:null;
+	
+		//add the checklist
+		if(self.trelloObject._trello.authorized() && !checkItem) {
+			var checkItemData = {
+				name: self.trelloObject.Cards[cardid].name
+			};
+			var response = JSON.parse(self.trelloObject._trello.post("checklists/"+checklist.id+"/checkItems", checkItemData).responseText);
+			response.checkListID = checklist.id;
+			return response;
 		}
 	};
 
@@ -54,7 +133,7 @@ Story = (function(){
 			var checkList = storyCheckLists[indexA];
 			var checkListItems = checkList.checkItems;
 			for(var indexB in checkListItems) {
-				var checkItem = storyCheckItems[indexB];
+				var checkItem = checkListItems[indexB];
 				for(var indexC in storyTaskCards) {
 					var storyTaskCard = storyTaskCards[indexC];
 					if(checkItem.name === storyTaskCard.name){
@@ -165,6 +244,53 @@ Story = (function(){
 		$(actions).append(actionConvertChecklists);
 	}
 
+	function _getTaskCheckItem(cardid) {
+		var self = this;
+
+		var taskCard = self.taskCards.filter(function(i){return i.data.id === cardid;});
+		taskCard = taskCard.length>0?taskCard[0]:null;
+		if(!taskCard)
+			return console.error("No task with the id of "+cardid+" exists in story "+self.storyID);
+
+		var storyCheckItems = _getStoryCheckItems.apply(self);
+		var checkItemID = taskCard.checkItemID;
+		var checkItem = storyCheckItems.filter(function(i){return i.id == checkItemID;});
+		checkItem = checkItem.length>0?checkItem[0]:null;
+
+		if(!checkItem)
+			return console.error("No checkItem with the id of "+checkItemID+" exists in story "+self.storyID);
+
+		return checkItem;
+	}
+
+	function _getStoryCheckItems() {
+		var self = this;
+
+		// if(!self.storyCheckItems) {
+			var storyCheckLists = _getStoryCheckLists.apply(self);
+			self.storyCheckItems = [];
+			for(var storyCheckListsIndex in storyCheckLists) {
+				var checkList = storyCheckLists[storyCheckListsIndex];
+				for(checkItemIndex in checkList.checkItems) {
+					var checkItem = checkList.checkItems[checkItemIndex];
+					checkItem.checkListID = checkList.id;
+					self.storyCheckItems.push(checkItem);
+				}
+			}
+		// }
+
+		return self.storyCheckItems;
+	}
+
+	function _getStoryCheckLists() {
+		var self = this;
+
+		// if(!self.storyCheckLists)
+			self.storyCheckLists = JSON.parse(self.trelloObject._trello.get('cards/'+self.storyCard.data.id+'/checklists').responseText);
+
+		return self.storyCheckLists;
+	}
+
 	// Adding a checklist auto
 	function _addTaskFromCheckList(trello, requestInfo) {
 		var self = this;
@@ -188,6 +314,7 @@ Story = (function(){
 				var newCardId = trello.createCard(destListId, self.storyID, newCardData);
 				trello.Cards[newCardId].checkItemID = mostRecentCheckItem.id;
 				trello.Cards[newCardId].checkListID = checkListData.id;
+				trello.Cards[newCardId].trelloObject = self.trelloObject;
 			}
 			else {
 				console.error("Failed to add task from checklist: Couldn't find destination list name in checklist name.");
@@ -218,7 +345,7 @@ Story = (function(){
 		// THIS card
 		if(self.storyID === card.storyID && card) {
 			var storyCheckLists = JSON.parse(trello._trello.get("cards/"+self.storyCard.data.id+"/checklists").responseText);
-			var allCheckItems = storyCheckLists.map(function(checkList){for(i in checkList.checkItems){checkList.checkItems[i].checkListId = checkList.id;return checkList.checkItems[i];}});
+			var allCheckItems = storyCheckLists.map(function(checkList){for(i in checkList.checkItems){checkList.checkItems[i]['checkListId'] = checkList.id;return checkList.checkItems[i];}});
 			var checkItemToDelete = allCheckItems.filter(function(i){return i.name == card.name;});
 			checkItemToDelete = checkItemToDelete.length>0?checkItemToDelete[0]:null;
 			if(trello._trello.authorized()){
@@ -267,6 +394,23 @@ Story = (function(){
 		}
 	}
 
+	function _processStoryCardRename(trello, requestInfo, storyCard) {
+		var self = this;
+
+		// THIS
+		if(self.storyCard.data.id === storyCard.data.id) {
+			var newName = requestInfo.details.requestBody.formData.name[0];
+			var newStoryID = newName.match(/([0-9][0-9][0-9]).*/i);
+			newStoryID = newStoryID?newStoryID[1]:null;
+
+			if(newStoryID) {
+				self.setStoryID(newStoryID);
+			}
+			else
+				return console.error("Failed to get the new StoryID.");
+		}
+	}
+
     //========================================================================//
     //																		  //
     //							Event Listeners 							  //
@@ -295,7 +439,10 @@ Story = (function(){
 		$(document).on('checkItemNameChange', function(event, trello, requestInfo, card){_renameTaskCard.apply(self, [trello, requestInfo, card]);});
 
 		// Wathc for card renames
-		$(document).on('cardNameChange', function(event, trello, requestInfo, card){_renameTaskCheckItem.apply(self, [trello, requestInfo, card]);});
+		$(document).on('cardNameChangeFromTask', function(event, trello, requestInfo, card){_renameTaskCheckItem.apply(self, [trello, requestInfo, card]);});
+
+		// Watch for story Card renames
+		$(document).on('storyNameChange', function(event, trello, requestInfo, storyCard){_processStoryCardRename.apply(self, [trello, requestInfo, storyCard]);});
 
 		// DOM Manipulators
     	// Watch for Card Option Clicks. Ensure to load them once the Menu is loaded

@@ -24,6 +24,7 @@ Card = (function(){
 		self.selected = false;
 		self.checkItemID = null;	// Should be linked differently once everything is object oriented.
 		self.checkListID = null;
+		self.trelloObject = null;
 
 		// Inititory Functions
 		_addCardID.apply(self);
@@ -66,8 +67,77 @@ Card = (function(){
 	};
 
 	Card.prototype.setName = function(name) {
+		var self = this,
+			newName = name;
+
+		if(self.storyID){
+			newName = self.storyID + " " + name;
+		}
+
+	 	if(self.trelloObject._trello.authorized()){
+	 		var jqXHR = self.trelloObject._trello.put('cards/'+self.data.id+'/name', {value: newName}),
+	 			cardInfo = JSON.parse(jqXHR.responseText);
+
+	 		self.data = cardInfo;
+ 			self.text = cardInfo.name;
+ 			self.name = name;
+ 			return true;
+	 	}
+	 	return false;
+	};
+
+	Card.prototype.setStoryID = function(storyID) {
+		var self = this;;
+		storyID = parseInt(storyID);
+		storyID = '00'+storyID;
+		storyID = storyID.length>3?storyID.substring(storyID.length-3):storyID;
+
+		if(!self.trelloObject)
+			return console.error("card has no reference to parent trelloObject")
+
+		// If this is the story Card then we're done
+		if(self.type === 'Tasks'){
+			// Ensure that the story requested exists
+			var destStoryCard = self.trelloObject.Stories.filter(function(i){return i.storyID === storyID;});
+			var srcStoryCard = self.trelloObject.Stories.filter(function(i){return i.storyID === self.storyID;});
+			destStoryCard = destStoryCard.length>0?destStoryCard[0]:null;
+			srcStoryCard = srcStoryCard.length>0?srcStoryCard[0]:null;
+			if(destStoryCard) {
+				// remove this card from the current story if it already belongs to one
+				if(srcStoryCard){
+					srcStoryCard.removeTask(self.data.id);
+				}
+				// add this card to the story task lists
+				destStoryCard.taskCards.push(self);
+
+				// add a checklist item in the story card to reresent this card.
+				var checkItemInfo = destStoryCard.addTaskCheckItem(self.data.id);
+				if(checkItemInfo){
+					self.checkListID = checkItemInfo.checkListID;
+					self.checkItemID = checkItemInfo.id;
+				}
+
+			}
+			else {
+				return console.error("Failed to set the story ID of this card. story "+storyID+" doesn't exist.");
+			}
+		}
+		self.storyID = storyID;
+		self.setName(self.name);
+		return true;
+	};
+
+	Card.prototype.removeFromStory = function(){
 		var self = this;
-		$(document).trigger("cardNameChange", [self, name]);
+
+		// set the storyID
+		self.storyID = null;
+		// remove checkitem stuff
+		self.checkListID = null;
+		self.checkItemID = null;
+		// Set the card text;
+		if(self.setName(self.name))
+			return true;
 	};
 
     //========================================================================//
