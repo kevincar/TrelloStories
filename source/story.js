@@ -348,7 +348,7 @@ Story = (function(){
 			var allCheckItems = storyCheckLists.map(function(checkList){for(i in checkList.checkItems){checkList.checkItems[i]['checkListId'] = checkList.id;return checkList.checkItems[i];}});
 			var checkItemToDelete = allCheckItems.filter(function(i){return i.name == card.name;});
 			checkItemToDelete = checkItemToDelete.length>0?checkItemToDelete[0]:null;
-			if(trello._trello.authorized()){
+			if(trello._trello.authorized() && checkItemToDelete){
 				var response = JSON.parse(trello._trello.delete("checklists/"+checkItemToDelete.checkListId+"/checkItems/"+checkItemToDelete.id).responseText);
 				self.taskCards = self.taskCards.filter(function(i){return i.data.id !== card.data.id;});
 			}
@@ -404,7 +404,15 @@ Story = (function(){
 			newStoryID = newStoryID?newStoryID[1]:null;
 
 			if(newStoryID) {
-				self.setStoryID(newStoryID);
+				// Make sure that the story doesn't already exist
+				var story = self.trelloObject.Stories.filter(function(i){return i.storyID === newStoryID;});
+				story = story.length>0?story[0]:null;
+				if(!story)
+					self.setStoryID(newStoryID);
+				else {
+					self.storyCard.setName(self.storyCard.name);
+					return console.error("Cannot set the story card to story "+newStoryID+" because it already exists");
+				}
 			}
 			else
 				return console.error("Failed to get the new StoryID.");
