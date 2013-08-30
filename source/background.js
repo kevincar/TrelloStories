@@ -1,4 +1,4 @@
-// // Background
+// Background
 
 // Listen for incoming requests from the Client Script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
@@ -34,4 +34,9 @@ var initMessages = function(){
 			});
 		});
 	}, filter, ['requestBody']);
+
+	
+	chrome.tabs.getSelected(null, function(tab){
+		chrome.pageAction.show(tab.id);
+	});
 };
